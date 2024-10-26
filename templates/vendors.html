@@ -1,0 +1,74 @@
+{% extends "index.html" %}
+
+{% block title %}Vendors{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6">Vendors</h1>
+
+    <div class="flex flex-col md:flex-row gap-4 mb-6">
+        <div class="relative flex-grow">
+            <i class="fas fa-search absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <input type="text" id="searchInput" placeholder="Search vendors..." class="w-full pl-8 pr-2 py-2 border rounded-md">
+        </div>
+        <select id="filterSelect" class="w-full md:w-[180px] border rounded-md p-2">
+            <option value="">All Types</option>
+            <option value="Catering">Catering</option>
+            <option value="Florist">Florist</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Photography">Photography</option>
+            <option value="Venue">Venue</option>
+            <option value="Bakery">Bakery</option>
+            <option value="Decor">Decor</option>
+        </select>
+    </div>
+
+    <div id="vendorGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for vendor in vendors %}
+            <div class="vendor-card bg-white shadow-md rounded-lg p-4">
+                <img src="{{ vendor.image_path }}" alt="{{ vendor.name }}" class="w-full h-48 object-cover mb-4 rounded-md">
+                <div class="flex items-center mb-2">
+                    <span class="text-yellow-400 mr-1">★</span>
+                    <span class="text-gray-600">{{ vendor.star_rating }}</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">{{ vendor.name }}</h3>
+                <p class="text-gray-600 mb-2">Category: {{ vendor.category }}</p>
+                <p class="text-gray-600 mb-2">{{ vendor.description }}</p>
+                <p class="text-gray-600 mb-2">Phone: {{ vendor.phone_number }}</p>
+                <p class="text-gray-600 mb-2">Email: {{ vendor.email }}</p>
+                <p class="text-gray-600 mb-2">Service Fee: ${{ vendor.service_fee }}</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if not vendors %}
+        <p id="noVendorsMessage" class="text-center mt-6 text-gray-500">No vendors found matching your criteria.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const searchInput = document.getElementById('searchInput');
+    const filterSelect = document.getElementById('filterSelect');
+    const vendorCards = document.querySelectorAll('.vendor-card');
+
+    function filterVendors() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const filterType = filterSelect.value.toLowerCase();
+
+        vendorCards.forEach(card => {
+            const vendorName = card.querySelector('h3').textContent.toLowerCase();
+            const vendorType = card.querySelector('p').textContent.toLowerCase();
+
+            const matchesSearch = vendorName.includes(searchTerm);
+            const matchesFilter = filterType === '' || vendorType.includes(filterType);
+
+            card.style.display = matchesSearch && matchesFilter ? 'block' : 'none';
+        });
+    }
+
+    searchInput.addEventListener('input', filterVendors);
+    filterSelect.addEventListener('change', filterVendors);
+</script>
+{% endblock %}
