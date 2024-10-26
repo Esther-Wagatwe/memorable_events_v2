@@ -48,14 +48,18 @@ def create_data():
         db.session.commit()
         print(f"Created user: {new_user.username} with password: {password}")
 
-    # Create a list of vendors
+    # Update the list of vendor categories
+    categories = ['Catering', 'Florist', 'Entertainment', 'Photography', 'Venue', 'Bakery', 'Decor']
+
+    # Update vendors_data to use the new categories
     vendors_data = [
-        {'name': 'Acme Inc.', 'description': 'A wedding cake baking company.', 'image_path': 'https://images.unsplash.com/photo-1604702433171-33756f3f3825', 'phone_number': '0722653964', 'email': 'info@acmeltd.co.ke', 'service_fee': 26000},
-        {'name': 'Floral Studio', 'description': 'A floral design studio.', 'image_path': 'https://images.unsplash.com/reserve/xd45Y326SvKzSR3Nanc8_MRJ_8125-1.jpg', 'phone_number': '0722653964', 'email': 'hello@floralstudio.com', 'service_fee': 452000},
-        {'name': 'Cake Studio', 'description': 'A cake design studio.', 'image_path': 'https://images.unsplash.com/photo-1627580358573-ea0c4a2cb199', 'phone_number': '0722653964', 'email': 'joan@cakestudio.net', 'service_fee': 10000},
-        {'name': 'Bakery Studio', 'description': 'A bakery design studio.', 'image_path': 'https://images.unsplash.com/photo-1585779885249-e55411459cf7', 'phone_number': '0722653964', 'email': 'bake69@gmail.com', 'service_fee': 65000},
-        {'name': 'Wedding Studio', 'description': 'A wedding design studio.', 'image_path': 'https://images.unsplash.com/photo-1519741497674-611481863552', 'phone_number': '0722653964', 'email': 'contact@email.co.ze', 'service_fee': 15000},
-        {'name': 'Event Studio', 'description': 'An event design studio.', 'image_path': 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4', 'phone_number': '0722653964', 'email': 'all@email.com', 'service_fee': 25000},
+        {'name': 'Acme Inc.', 'description': 'A premier catering company for all events.', 'image_path': 'https://images.unsplash.com/photo-1604702433171-33756f3f3825', 'phone_number': '0722653964', 'email': 'info@acmeltd.co.ke', 'service_fee': 26000, 'category': 'Catering'},
+        {'name': 'Floral Studio', 'description': 'Exquisite floral arrangements for your special day.', 'image_path': 'https://images.unsplash.com/reserve/xd45Y326SvKzSR3Nanc8_MRJ_8125-1.jpg', 'phone_number': '0722653965', 'email': 'hello@floralstudio.com', 'service_fee': 45000, 'category': 'Florist'},
+        {'name': 'Rhythm Masters', 'description': 'Top-notch entertainment for unforgettable events.', 'image_path': 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3', 'phone_number': '0722653966', 'email': 'bookings@rhythmmasters.com', 'service_fee': 35000, 'category': 'Entertainment'},
+        {'name': 'Capture Moments', 'description': 'Professional photography to preserve your memories.', 'image_path': 'https://images.unsplash.com/photo-1519741497674-611481863552', 'phone_number': '0722653967', 'email': 'info@capturemoments.com', 'service_fee': 50000, 'category': 'Photography'},
+        {'name': 'Grand Plaza', 'description': 'Elegant venue for all your event needs.', 'image_path': 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3', 'phone_number': '0722653968', 'email': 'bookings@grandplaza.com', 'service_fee': 100000, 'category': 'Venue'},
+        {'name': 'Sweet Delights Bakery', 'description': 'Delicious cakes and pastries for every occasion.', 'image_path': 'https://images.unsplash.com/photo-1627580358573-ea0c4a2cb199', 'phone_number': '0722653969', 'email': 'orders@sweetdelights.com', 'service_fee': 20000, 'category': 'Bakery'},
+        {'name': 'Decor Dreams', 'description': 'Transforming spaces into magical settings.', 'image_path': 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4', 'phone_number': '0722653970', 'email': 'info@decordreams.com', 'service_fee': 40000, 'category': 'Decor'},
     ]
 
     for vendor_data in vendors_data:
@@ -66,31 +70,68 @@ def create_data():
         db.session.commit()
         
         # Create random reviews
-        for _ in range(random.randint(1, 5)):
+        total_rating = 0
+        num_reviews = random.randint(1, 5)
+        for _ in range(num_reviews):
             random_user = random.choice(User.query.all())
             print(f"Creating new review for {vendor_data['name']} from {random_user.username}")
             
+            rating = weighted_starts_rating()
+            total_rating += rating
+            comment = generate_comment(vendor_data['category'], rating)
             review = Review(
-                rating=weighted_starts_rating(),
-                comment=lorem.sentence(),
+                rating=rating,
+                comment=comment,
                 user=random_user,
                 vendor=new_vendor
             )
             db.session.add(review)
 
-        db.session.commit()  # Commit after adding all reviews for a vendor
+        # Calculate and set the overall rating
+        if num_reviews > 0:
+            new_vendor.rating = round(total_rating / num_reviews, 1)
+        else:
+            new_vendor.rating = 0.0
+
+        db.session.commit()  # Commit after adding all reviews and setting the rating for a vendor
 
     db.session.close()
+
+
+def generate_comment(category, rating):
+    positive_comments = [
+        "Great service!",
+        "Highly recommended.",
+        "Exceeded our expectations.",
+        "Made our day special.",
+        "Very professional and friendly.",
+    ]
+    negative_comments = [
+        "Disappointed with the service.",
+        "Not worth the price.",
+        "Could have been better.",
+        "Had some issues.",
+        "Wouldn't recommend.",
+    ]
+    neutral_comments = [
+        "It was okay.",
+        "Average service.",
+        "Met our basic needs.",
+        "Nothing special, but not bad.",
+        "Decent, but room for improvement.",
+    ]
+    
+    if rating >= 4:
+        base_comment = random.choice(positive_comments)
+    elif rating <= 2:
+        base_comment = random.choice(negative_comments)
+    else:
+        base_comment = random.choice(neutral_comments)
+    
+    return f"{base_comment} {lorem.sentence()}"
 
 
 if __name__ == "__main__":
     app = create_app()
     with app.app_context():
         create_data()
-
-# Created user: John with password: n1fAiGXE5g
-# Created user: Emily with password: Z1GdQggkpp
-# Created user: Michael with password: Hd5l3A9Q84
-# Created user: Sarah with password: S8yQSSH9En
-# Created user: David with password: N6WLYvcaCg
-# Created user: Jessica with password: YSCs3eCkzj
