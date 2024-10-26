@@ -5,6 +5,7 @@ from models.event import Event, EventStatus
 from models import db
 from models.vendor import Vendor
 from flask import Blueprint
+from datetime import datetime
 
 
 app_views = Blueprint('app_views', __name__)
@@ -90,18 +91,42 @@ def events():
     serialized_events = [event.serialize() for event in events]
     return render_template('events.html', events=serialized_events)
 
-@app_views.route('/event/<int:event_id>', methods=['GET'])
+@app_views.route('/event/<event_id>', methods=['GET', 'POST', 'PUT'])
 @login_required
 def event_details(event_id):
-    """Route for event details page"""
-    event = Event.query.get(event_id)
+    if event_id == 'new':
+        event = Event(owner_id=current_user.user_id)
+    else:
+        event = Event.query.get_or_404(int(event_id))
+        if event.owner_id != current_user.user_id:
+            flash('You do not have permission to view this event', 'error')
+            return redirect(url_for('app_views.events'))
 
-    if not event:
-        flash('Event not found', 'error')
-        return redirect(url_for('app_views.events'))
-    
+    if request.method == 'POST':
+        # Handle creating a new event
+        event.name = request.form['name']
+        event.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
+        event.location = request.form['location']
+        event.description = request.form['description']
+        db.session.add(event)
+        db.session.commit()
+        flash('Event created successfully', 'success')
+        return redirect(url_for('app_views.event_details', event_id=event.event_id))
+
+    elif request.method == 'PUT':
+        # Handle updating an existing event
+        event.name = request.form['name']
+        event.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
+        event.location = request.form['location']
+        event.description = request.form['description']
+        db.session.commit()
+        flash('Event updated successfully', 'success')
+        return redirect(url_for('app_views.event_details', event_id=event.event_id))
+
     context = {
-        'event': event
+        'event': event,
+        'expenses': event.expenses if event_id != 'new' else {},
+        'spent_budget': event.spent_budget if event_id != 'new' else 0
     }
     return render_template('event_details.html', **context)
 
@@ -123,6 +148,37 @@ def dashboard():
     vendors = Vendor.query.all()
     context['vendors'] = vendors
     return render_template('dashboard.html', **context)
+
+@app_views.route('/events/<int:event_id>/add_expense', methods=['POST'])
+@login_required
+def add_expense(event_id):
+    """Route to add an expense to an event"""
+    event = Event.query.get_or_404(event_id)
+    
+    # Check if the current user is the owner of the event
+    if event.owner_id != current_user.user_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    data = request.json
+    description = data.get('description')
+    amount = data.get('amount')
+
+    if not description or not amount:
+        return jsonify({'error': 'Description and amount are required'}), 400
+
+    try:
+        amount = float(amount)
+    except ValueError:
+        return jsonify({'error': 'Amount must be a number'}), 400
+
+    event.add_expense(description, amount)
+
+    return jsonify({
+        'description': description,
+        'amount': amount,
+        'total_spent': event.spent_budget,
+        'expenses': event.expenses
+    }), 201
 
 @app_views.route('/logout')
 @login_required
