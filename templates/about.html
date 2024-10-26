@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}About - Memorable Events{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-12">
+    <h1 class="text-5xl font-bold mb-16 text-center">About Memorable Events</h1>
+    
+    <div class="space-y-12">
+        <div class="bg-white shadow-lg rounded-2xl p-10 transition duration-300 hover:scale-110 hover:shadow-xl">
+            <h2 class="text-3xl font-semibold mb-6">What Are We Creating?</h2>
+            <p class="text-gray-700 text-lg">
+                We're crafting a vibrant platform where every event shines! Imagine organizing all your special moments with just a few clicks—making memories has never been this easy!
+            </p>
+        </div>
+
+        <div class="bg-white shadow-lg rounded-2xl p-10 transition duration-300 hover:scale-110 hover:shadow-xl">
+            <h2 class="text-3xl font-semibold mb-6">What Do We Do?</h2>
+            <p class="text-gray-700 text-lg">
+                We provide a magical toolkit that helps you plan, manage, and rock every event! From creating your guest lists to vendor choices, everything you need is right at your fingertips—let's make your vision come alive!
+            </p>
+        </div>
+
+        <div class="bg-white shadow-lg rounded-2xl p-10 transition duration-300 hover:scale-110 hover:shadow-xl">
+            <h2 class="text-3xl font-semibold mb-6">Who Are We?</h2>
+            <p class="text-gray-700 text-lg">
+                We're a passionate team based in Nairobi, Kenya, on a mission to transform event planning into an easy adventure! Together, let's create moments that matter!
+            </p>
+        </div>
+
+        <div class="bg-white shadow-lg rounded-2xl p-10 transition duration-300 hover:scale-110 hover:shadow-xl">
+            <h2 class="text-3xl font-semibold mb-6">Where Do We Operate?</h2>
+            <p class="text-gray-700 text-lg">
+                Our platform proudly serves users across Kenya, bringing local flair and insights to elevate your events to the next level—your perfect celebration is just around the corner!
+            </p>
+        </div>
+
+        <div class="bg-white shadow-lg rounded-2xl p-10 transition duration-300 hover:scale-110 hover:shadow-xl">
+            <h2 class="text-3xl font-semibold mb-6">Why Choose Us?</h2>
+            <p class="text-gray-700 text-lg">
+                We blend creativity with cutting-edge technology to deliver unforgettable support for your events. With us, hosting events becomes easy—let's make magic together!
+            </p>
+        </div>
+
+        <!-- Team Section -->
+        <div class="bg-white shadow-lg rounded-2xl p-10 transition duration-300 hover:scale-110 hover:shadow-xl">
+            <h2 class="text-3xl font-semibold mb-8 text-center">Meet Our Team</h2>
+            <div class="flex flex-col items-center">
+                <img src="{{ url_for('static', filename='images/team.jpg') }}" alt="Esther Wagatwe" class="w-40 h-40 rounded-full mb-6 object-cover shadow-md">
+                <h3 class="text-2xl font-semibold">Esther Wagatwe</h3>
+                <p class="text-gray-600 mb-4 text-lg">Founder & CEO</p>
+                <p class="text-gray-700 text-center max-w-lg text-lg">
+                    Esther is the visionary behind Memorable Events. With her passion for creating unforgettable experiences, she leads our team in revolutionizing event planning across Kenya.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
