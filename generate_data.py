@@ -48,7 +48,8 @@ def create_data():
         db.session.commit()
         print(f"Created user: {new_user.username} with password: {password}")
 
-    # Update the list of vendor categories
+    # This list of categories is used to define the types of vendors in the system.
+    # It's referenced when creating vendor data in the vendors_data list below.
     categories = ['Catering', 'Florist', 'Entertainment', 'Photography', 'Venue', 'Bakery', 'Decor']
 
     # Update vendors_data to use the new categories
