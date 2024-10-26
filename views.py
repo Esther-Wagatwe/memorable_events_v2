@@ -82,10 +82,28 @@ def landingpage():
     return render_template('landingpage.html')
 
 @app_views.route('/events')
+@login_required
 def events():
     """Route for events page"""
-    return "Events"
-    # return render_template('events.html')
+    user_id = current_user.user_id
+    events = Event.query.filter_by(owner_id=user_id).all()
+    serialized_events = [event.serialize() for event in events]
+    return render_template('events.html', events=serialized_events)
+
+@app_views.route('/event/<int:event_id>', methods=['GET'])
+@login_required
+def event_details(event_id):
+    """Route for event details page"""
+    event = Event.query.get(event_id)
+
+    if not event:
+        flash('Event not found', 'error')
+        return redirect(url_for('app_views.events'))
+    
+    context = {
+        'event': event
+    }
+    return render_template('event_details.html', **context)
 
 @app_views.route('/vendors')
 def vendors():
@@ -132,22 +150,6 @@ def profile():
 @login_required
 def settings():
     return "settings"
-
-@app_views.route('/api/events')
-@login_required
-def get_events():
-    try:
-        events = Event.query.all()
-        return jsonify([event.serialize() for event in events]), 200
-    except Exception as e:
-        # Log the error here
-        return jsonify({"error": "An error occurred while fetching events"}), 500
-
-@app_views.route('/api/event_types')
-@login_required
-def get_event_types():
-    event_types = ['Wedding', 'Corporate', 'Birthday', 'Other']
-    return jsonify(event_types)
 
 @app_views.route('/api/event_statuses')
 @login_required

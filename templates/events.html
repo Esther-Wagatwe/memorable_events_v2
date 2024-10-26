@@ -1,0 +1,200 @@
+{% extends "index.html" %}
+
+{% block title %}Your Events{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">Your Events</h1>
+        <button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded inline-flex items-center" onclick="openDialog()">
+            <i class="lucide-plus mr-2"></i> Create Event
+        </button>
+    </div>
+
+    <!-- Events List -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="eventsList">
+        {% for event in events %}
+            <div class="bg-white shadow-md rounded-lg p-4">
+                <h2 class="text-xl font-semibold mb-2">{{ event.name }}</h2>
+                <p class="text-gray-600 mb-2">Date: {{ event.date }}</p>
+                <p class="text-gray-600 mb-2">Location: {{ event.location }}</p>
+                <p class="text-gray-600 mb-4">{{ event.description[:100] }}{% if event.description|length > 100 %}...{% endif %}</p>
+                <!-- View Details Button -->
+                <div class="flex justify-between items-center">
+                    <a href="{{ url_for('app_views.event_details', event_id=event.event_id) }}">View Details</a>
+                    <span class="text-sm text-gray-500">{{ event.status }}</span>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex justify-center mt-8">
+        <button id="prevButton" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow inline-flex items-center">
+            <i class="lucide-chevron-left mr-2"></i> Previous
+        </button>
+        <button id="nextButton" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow inline-flex items-center ml-2">
+            Next <i class="lucide-chevron-right ml-2"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Create Event Dialog -->
+<div id="createEventDialog" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Create New Event</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500">
+                    Enter the details for your new event here. Click save when you're done.
+                </p>
+            </div>
+            <div class="mt-4">
+                <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+                <input type="text" id="title" name="title" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            <div class="mt-4">
+                <label for="date" class="block text-sm font-medium text-gray-700">Date</label>
+                <input type="date" id="date" name="date" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            <div class="mt-4">
+                <label for="type" class="block text-sm font-medium text-gray-700">Type</label>
+                <select id="type" name="type" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <option value="">Select event type</option>
+                    <option value="Wedding">Wedding</option>
+                    <option value="Birthday">Birthday</option>
+                    <option value="Corporate">Corporate</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="items-center px-4 py-3">
+                <button id="saveButton" class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                    Save Event
+                </button>
+            </div>
+            <div class="items-center px-4 py-3">
+                <button id="cancelButton" onclick="closeDialog()" class="px-4 py-2 bg-gray-300 text-gray-700 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    events = {{ events | tojson | safe }};
+
+    document.addEventListener('DOMContentLoaded', function() {
+        renderEvents();
+    });
+
+    const ITEMS_PER_PAGE = 6;
+    let currentPage = 1;
+
+    function renderEvents() {
+        // Render events to the eventsList div
+        const eventsList = document.getElementById('eventsList');
+        // Clear the eventsList div
+        eventsList.innerHTML = '';
+        
+        // Calculate the start and end indices for the current page
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        // Get the events to show on the current page
+        const eventsToShow = events.slice(startIndex, endIndex);
+
+        // Loop through the events to show on the current page
+        eventsToShow.forEach(event => {
+            // Create a new div for the event card
+            const card = document.createElement('div');
+            // Add the event card class styles
+            card.className = 'bg-white shadow-md rounded-lg overflow-hidden';
+            // Add the event card content
+            card.innerHTML = `
+                <div class="p-4">
+                    <h2 class="font-bold text-xl mb-2">${event.name}</h2>
+                    <div class="flex items-center mt-4">
+                        <i class="lucide-calendar mr-2"></i>
+                        <span>${new Date(event.date).toLocaleDateString()}</span>
+                    </div>
+                </div>
+                <div class="px-4 py-3 bg-gray-100">
+                    <a href="/event/${event.event_id}" class="text-blue-500 hover:text-blue-600 font-semibold">View Details</a>
+                </div>
+            `;
+            // Add the event card to the eventsList div
+            eventsList.appendChild(card);
+        });
+
+        updatePaginationButtons();
+    }
+
+    function updatePaginationButtons() {
+        // Get the previous and next buttons
+        const prevButton = document.getElementById('prevButton');
+        const nextButton = document.getElementById('nextButton');
+
+        // Disable the previous button if we're on the first page
+        prevButton.disabled = currentPage === 1;
+        // Disable the next button if we're on the last page
+        nextButton.disabled = currentPage === Math.ceil(events.length / ITEMS_PER_PAGE);
+
+        // Toggle the opacity of the previous and next buttons based on their disabled state
+        prevButton.classList.toggle('opacity-50', prevButton.disabled);
+        nextButton.classList.toggle('opacity-50', nextButton.disabled);
+    }
+
+    // Event listener for the previous button
+    document.getElementById('prevButton').addEventListener('click', function() {
+        if (currentPage > 1) {
+            currentPage--;
+            renderEvents();
+        }
+    });
+
+    // Event listener for the next button
+    document.getElementById('nextButton').addEventListener('click', function() {
+        if (currentPage < Math.ceil(events.length / ITEMS_PER_PAGE)) {
+            currentPage++;
+            renderEvents();
+        }
+    });
+
+    // Function to open the create event dialog
+    function openDialog() {
+        document.getElementById('createEventDialog').classList.remove('hidden');
+    }
+
+    // Function to close the create event dialog
+    function closeDialog() {
+        document.getElementById('createEventDialog').classList.add('hidden');
+    }
+
+    // Event listener for the save button
+    document.getElementById('saveButton').addEventListener('click', function() {
+        const title = document.getElementById('title').value;
+        const date = document.getElementById('date').value;
+        const type = document.getElementById('type').value;
+        
+        if (title && date && type) {
+            const newEvent = { id: events.length + 1, title, date, type };
+            events.push(newEvent);
+            renderEvents();
+            closeDialog();
+            
+            // Clear form fields
+            document.getElementById('title').value = '';
+            document.getElementById('date').value = '';
+            document.getElementById('type').value = '';
+        } else {
+            alert('Please fill in all fields');
+        }
+    });
+
+    // Initial render
+    renderEvents();
+</script>
+{% endblock %}
