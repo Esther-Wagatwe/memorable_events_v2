@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memorable Events</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="flex flex-col min-h-screen">
+    <header class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-6 flex justify-between items-center max-w-7xl">
+            <h1 class="text-3xl font-bold text-primary">Memorable Events</h1>
+            <nav class="flex items-center space-x-6">
+                <a href="{{ url_for('app_views.about') }}" class="px-5 py-3 text-lg font-medium text-gray-700 hover:bg-gray-100 rounded-md">About</a>
+                <a href="{{ url_for('app_views.login') }}" class="px-5 py-3 text-lg font-medium text-gray-700 hover:bg-gray-100 rounded-md">Login</a>
+                <a href="{{ url_for('app_views.signup') }}" class="px-5 py-3 text-lg font-medium text-gray-700 hover:bg-gray-100 rounded-md">Sign Up</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        <section class="relative text-white py-32 md:py-48 lg:py-64">
+            <img src="/static/images/landing.jpg" alt="Event background" class="absolute inset-0 w-full h-full object-cover object-center">
+            <div class="absolute inset-0 bg-black bg-opacity-50"></div>
+            <div class="relative container mx-auto px-4 text-center z-10">
+                <h2 class="text-5xl md:text-6xl lg:text-7xl font-bold mb-6">Plan Your Perfect Event</h2>
+                <p class="text-2xl md:text-3xl mb-10">From weddings to corporate gatherings, we've got you covered.</p>
+                <button class="px-8 py-4 text-xl md:text-2xl font-medium bg-yellow-400 text-gray-900 hover:bg-yellow-300 rounded-lg transition duration-300 shadow-lg">
+                    Get Started
+                    <i data-lucide="arrow-right" class="inline-block ml-3 w-6 h-6"></i>
+                </button>
+            </div>
+        </section>
+
+        <section class="py-20">
+            <div class="container mx-auto px-4">
+                <h3 class="text-3xl font-bold text-center mb-12">Why Choose Memorable Events?</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="text-center">
+                        <i data-lucide="calendar" class="mx-auto h-12 w-12 text-primary mb-4"></i>
+                        <h4 class="text-xl font-semibold mb-2">Easy Planning</h4>
+                        <p>Intuitive tools to organize every aspect of your event.</p>
+                    </div>
+                    <div class="text-center">
+                        <i data-lucide="users" class="mx-auto h-12 w-12 text-primary mb-4"></i>
+                        <h4 class="text-xl font-semibold mb-2">Vendor Network</h4>
+                        <p>Connect with top-rated vendors in your area.</p>
+                    </div>
+                    <div class="text-center">
+                        <i data-lucide="check-circle" class="mx-auto h-12 w-12 text-primary mb-4"></i>
+                        <h4 class="text-xl font-semibold mb-2">Stress-Free Management</h4>
+                        <p>Track RSVPs, manage tasks, and stay on budget.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-gray-100 py-20">
+            <div class="container mx-auto px-4 text-center">
+                <h3 class="text-3xl font-bold mb-8">Ready to Create Unforgettable Memories?</h3>
+                <button class="px-6 py-3 text-lg font-medium text-white bg-primary hover:bg-primary-dark rounded-md">
+                    Start Planning Now
+                    <i data-lucide="arrow-right" class="inline-block ml-2"></i>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h5 class="text-lg font-semibold mb-4">About Us</h5>
+                    <p>Memorable Events is your all-in-one solution for planning and managing spectacular events.</p>
+                </div>
+                <div>
+                    <h5 class="text-lg font-semibold mb-4">Quick Links</h5>
+                    <ul class="space-y-2">
+                        <li><a href="{{ url_for('app_views.landingpage') }}" class="hover:underline">Home</a></li>
+                        <li><a href="{{ url_for('app_views.signup') }}" class="hover:underline">Sign Up</a></li>
+                        <li><a href="{{ url_for('app_views.about') }}" class="hover:underline">About</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="text-lg font-semibold mb-4">Connect With Us</h5>
+                    <div class="flex space-x-4">
+                        <a href="#" class="hover:text-primary">
+                            <i data-lucide="facebook" class="w-6 h-6"></i>
+                            <span class="sr-only">Facebook</span>
+                        </a>
+                        <a href="#" class="hover:text-primary">
+                            <i data-lucide="twitter" class="w-6 h-6"></i>
+                            <span class="sr-only">Twitter</span>
+                        </a>
+                        <a href="#" class="hover:text-primary">
+                            <i data-lucide="instagram" class="w-6 h-6"></i>
+                            <span class="sr-only">Instagram</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 text-center">
+                <p>&copy; 2024 Memorable Events. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
