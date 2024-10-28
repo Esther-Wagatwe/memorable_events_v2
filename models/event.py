@@ -15,7 +15,6 @@ from models.guest import Guest
 from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy import Enum as SqlAlchemyEnum, JSON
 from sqlalchemy.orm import relationship
-from .vendor import event_vendor
 
 class EventStatus(PythonEnum):
     """Event status enum.
