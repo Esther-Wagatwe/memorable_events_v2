@@ -1,7 +1,41 @@
+"""Vendor model module.
+
+This module defines the Vendor model for managing service providers in the application.
+It handles vendor data, relationships with events and reviews, and provides methods
+for serialization and rating calculations.
+
+Classes:
+    Vendor: SQLAlchemy model for vendors
+"""
 from models import db
-from models.event_vendor import event_vendor
+
+# Association table for many-to-many relationship between events and vendors
+event_vendors = db.Table('event_vendors',
+    db.Column('event_id', db.Integer, db.ForeignKey('Event.event_id')),
+    db.Column('vendor_id', db.Integer, db.ForeignKey('Vendor.vendor_id'))
+)
 
 class Vendor(db.Model):
+    """Vendor model class.
+    
+    Represents a service provider that can be booked for events.
+    
+    Attributes:
+        vendor_id (int): Primary key
+        name (str): Vendor business name
+        category (str): Type of service provided
+        description (str): Detailed description of services
+        image_path (str): Path to vendor profile image
+        phone_number (str): Contact phone number
+        email (str): Contact email address
+        service_fee (int): Base fee for services
+        rating (int): Average numerical rating
+        status (str): Account status, defaults to 'pending'
+        
+    Relationships:
+        reviews: Reviews received by this vendor (Review)
+        events: Events this vendor is booked for (Event)
+    """
     __tablename__ = 'Vendor'
 
     vendor_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -13,14 +47,17 @@ class Vendor(db.Model):
     email = db.Column(db.String(255), nullable=False)
     service_fee = db.Column(db.Integer, nullable=True)
     rating = db.Column(db.Integer, nullable=True)
+    status = db.Column(db.String(10), default='pending')
 
-    # Relationship between Vendor and Review    
     reviews = db.relationship('Review', back_populates='vendor')
-    
-    # Relationship between Vendor and Event
-    events = db.relationship('Event', secondary=event_vendor, back_populates='vendors')
+    events = db.relationship('Event', secondary=event_vendors, back_populates='vendors')
 
     def serialize(self):
+        """Convert vendor instance to dictionary format.
+        
+        Returns:
+            dict: Vendor data in serialized format
+        """
         return {
             'vendor_id': self.vendor_id,
             'name': self.name,
@@ -30,11 +67,23 @@ class Vendor(db.Model):
             'phone_number': self.phone_number,
             'email': self.email,
             'service_fee': self.service_fee,
+            'rating': self.rating,
+            'status': self.status
         }
     
     def __repr__(self):
+        """String representation of Vendor instance.
+        
+        Returns:
+            str: Vendor name
+        """
         return f'<Vendor {self.name}>'
 
     @property
     def star_rating(self):
+        """Get vendor's rating or 0 if not rated.
+        
+        Returns:
+            int: Numerical rating value or 0
+        """
         return self.rating if self.rating is not None else 0

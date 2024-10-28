@@ -1,6 +1,31 @@
+"""Guest model module.
+
+This module defines the Guest model for managing event attendees in the application.
+It handles guest data and relationships with events and invitations.
+
+Classes:
+    Guest: SQLAlchemy model for event guests
+"""
 from models import db
 
 class Guest(db.Model):
+    """Guest model class.
+    
+    Represents a guest invited to an event with properties for tracking contact
+    details and attendance status.
+    
+    Attributes:
+        guest_id (int): Primary key
+        name (str): Guest's full name
+        email (str): Guest's email address
+        phone (str): Guest's phone number
+        status (str): Guest's attendance status
+        event_id (int): Foreign key to Event table
+        
+    Relationships:
+        event: Associated event (Event)
+        invitations: Guest's invitations (Invitation)
+    """
     __tablename__ = 'Guest'
 
     guest_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -10,13 +35,15 @@ class Guest(db.Model):
     status = db.Column(db.String(45), nullable=True)
     event_id = db.Column(db.Integer, db.ForeignKey('Event.event_id'), nullable=False)
 
-    # Relationship between Guest and Event  
     event = db.relationship('Event', back_populates='guests')
-    
-    # Relationship between Guest and Invitation
     invitations = db.relationship('Invitation', back_populates='guest')
 
     def serialize(self):
+        """Convert guest instance to dictionary.
+        
+        Returns:
+            dict: Guest data in serializable format
+        """
         return {
             'guest_id': self.guest_id,
             'name': self.name,
@@ -27,4 +54,9 @@ class Guest(db.Model):
         }
     
     def __repr__(self):
+        """String representation of Guest instance.
+        
+        Returns:
+            str: Guest name and status
+        """
         return f'<Guest {self.name} (Status: {self.status})>'
