@@ -83,61 +83,130 @@
 
                 <!-- Vendors Tab -->
                 <div id="vendors-content" class="tab-content">
-                    <button class="mb-4 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
-                        Add New Vendor
-                    </button>
+                    <div class="flex justify-between mb-4">
+                        <button onclick="window.location.href='{{ url_for('app_views.vendors', event_id=event.event_id) }}';" 
+                                class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded inline-flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            Add New Vendor
+                        </button>
+                    </div>
+                    
+                    <!-- Existing vendors list -->
                     <ul class="space-y-4">
-                        {% for vendor in event.vendors %}
-                        <li class="border rounded-lg p-4">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-4">
-                                    <img src="{{ vendor.image_path }}" alt="{{ vendor.name }}" class="w-24 h-24 object-cover rounded-lg">
-                                    <div>
-                                        <h3 class="text-lg font-semibold">{{ vendor.name }}</h3>
-                                        <p class="text-gray-600">{{ vendor.description }}</p>
-                                        <p><strong>Contact:</strong> <a href="tel:{{ vendor.phone_number }}" class="text-blue-600">{{ vendor.phone_number }}</a></p>
-                                        <p><strong>Email:</strong> <a href="mailto:{{ vendor.email }}" class="text-blue-600">{{ vendor.email }}</a></p>
-                                        <p><strong>Status:</strong> <span class="text-green-600 font-semibold">Confirmed</span></p>
+                        {% if event.vendors %}
+                            {% for vendor in event.vendors %}
+                            <li class="border rounded-lg p-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-4">
+                                        <img src="{{ vendor.image_path }}" alt="{{ vendor.name }}" class="w-24 h-24 object-cover rounded-lg">
+                                        <div>
+                                            <h3 class="text-lg font-semibold">{{ vendor.name }}</h3>
+                                            <p class="text-gray-600">{{ vendor.description }}</p>
+                                            <p><strong>Contact:</strong> <a href="tel:{{ vendor.phone_number }}" class="text-blue-600">{{ vendor.phone_number }}</a></p>
+                                            <p><strong>Email:</strong> <a href="mailto:{{ vendor.email }}" class="text-blue-600">{{ vendor.email }}</a></p>
+                                            <p><strong>Status:</strong> <span class="text-green-600 font-semibold">Confirmed</span></p>
+                                        </div>
                                     </div>
+                                    <!-- delete button -->
+                                    <a href="{{ url_for('app_views.remove_vendor', event_id=event.event_id, vendor_id=vendor.vendor_id) }}" 
+                                       class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600 transition-colors"
+                                       onclick="return confirm('Are you sure you want to remove this vendor from the event?')">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                        Remove vendor
+                                    </a>
                                 </div>
-                                <!-- delete button -->
-                                <a href="{{ url_for('app_views.remove_vendor', event_id=event.event_id, vendor_id=vendor.vendor_id) }}" 
-                                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600 transition-colors"
-                                   onclick="return confirm('Are you sure you want to remove this vendor from the event?')">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                    </svg>
-                                    Remove vendor
-                                </a>
-                            </div>
-                        </li>
-                        {% endfor %}
+                            </li>
+                            {% endfor %}
+                        {% else %}
+                            <li class="text-gray-500 text-center py-4">
+                                No vendors added yet. Click "Add New Vendor" to get started.
+                            </li>
+                        {% endif %}
                     </ul>
                 </div>
 
                 <!-- Guests Tab -->
                 <div id="guests-content" class="tab-content" style="display: none;">
-                    <button class="mb-4 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
-                        Add Guest
-                    </button>
-                    <table class="w-full">
-                        <thead>
-                            <tr class="bg-gray-100">
-                                <th class="px-4 py-2 text-left">Name</th>
-                                <th class="px-4 py-2 text-left">Email</th>
-                                <th class="px-4 py-2 text-left">RSVP Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for guest in event.guests %}
-                            <tr>
-                                <td class="border px-4 py-2">{{ guest.name }}</td>
-                                <td class="border px-4 py-2">{{ guest.email }}</td>
-                                <td class="border px-4 py-2">{{ guest.rsvp_status }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    <div class="flex justify-between items-center mb-4">
+                        <button onclick="openGuestModal()" 
+                                class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+                            Add Guest
+                        </button>
+                        <button onclick="sendBulkInvitations()" 
+                                class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            Send All Invitations
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="px-4 py-2 text-left">Name</th>
+                                    <th class="px-4 py-2 text-left">Email</th>
+                                    <th class="px-4 py-2 text-left">Phone</th>
+                                    <th class="px-4 py-2 text-left">Status</th>
+                                    <th class="px-4 py-2 text-left">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for guest in event.guests %}
+                                <tr id="guest-{{ guest.guest_id }}" class="border-b hover:bg-gray-50">
+                                    <td class="px-4 py-2">{{ guest.name }}</td>
+                                    <td class="px-4 py-2">{{ guest.email }}</td>
+                                    <td class="px-4 py-2">{{ guest.phone or 'N/A' }}</td>
+                                    <td class="px-4 py-2">
+                                        <span class="px-2 py-1 rounded-full text-sm 
+                                            {% if guest.status == 'Accepted' %}
+                                                bg-green-100 text-green-800
+                                            {% elif guest.status == 'Declined' %}
+                                                bg-red-100 text-red-800
+                                            {% else %}
+                                                bg-yellow-100 text-yellow-800
+                                            {% endif %}">
+                                            {{ guest.status or 'Pending' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-2">
+                                        <div class="flex space-x-2">
+                                            <button onclick="sendInvitation({{ guest.guest_id }})" 
+                                                    class="text-blue-600 hover:text-blue-800" 
+                                                    title="Send Invitation">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                                </svg>
+                                            </button>
+                                            <button onclick="openGuestModal({{ guest.guest_id }})" 
+                                                    class="text-yellow-600 hover:text-yellow-800" 
+                                                    title="Edit Guest">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                </svg>
+                                            </button>
+                                            <button onclick="deleteGuest({{ guest.guest_id }})" 
+                                                    class="text-red-600 hover:text-red-800" 
+                                                    title="Delete Guest">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 
                 <!-- Tasks Tab -->
@@ -187,9 +256,13 @@
                 <!-- Budget tab content -->
                 <div id="budget-content" class="tab-content" style="display: none;">
                     <div class="mb-4">
-                        <h3 class="text-lg font-semibold">Total Budget: Ksh {{ "{:,.2f}".format(event.total_budget or 0) }}</h3>
+
                         <p>Spent: Ksh {{ "{:,.2f}".format(event.spent_budget or 0) }}</p>
                         <p>Remaining: Ksh {{ "{:,.2f}".format((event.total_budget or 0) - (event.spent_budget or 0)) }}</p>
+                        <button onclick="openExpenseModal()" 
+                                class="mt-4 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+                            Add Expense
+                        </button>
                     </div>
                     <div class="mt-8">
                         <h3 class="text-lg font-semibold mb-4">Expense Breakdown</h3>
@@ -199,13 +272,32 @@
                                     <tr class="bg-gray-100">
                                         <th class="px-4 py-2 text-left">Category</th>
                                         <th class="px-4 py-2 text-left">Amount</th>
+                                        <th class="px-4 py-2 text-left">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for category, amount in event.expenses.items() %}
-                                    <tr>
+                                    <tr id="expense-{{ loop.index }}">
                                         <td class="border px-4 py-2">{{ category }}</td>
                                         <td class="border px-4 py-2">Ksh {{ "{:,.2f}".format(amount) }}</td>
+                                        <td class="border px-4 py-2">
+                                            <div class="flex space-x-2">
+                                                <button onclick="openExpenseModal('{{ category }}', {{ amount }})" 
+                                                        class="text-blue-600 hover:text-blue-800">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                    </svg>
+                                                </button>
+                                                <button onclick="deleteExpense('{{ category }}')" 
+                                                        class="text-red-600 hover:text-red-800">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -213,10 +305,6 @@
                         {% else %}
                             <p>No expenses recorded yet.</p>
                         {% endif %}
-                    </div>
-                    <div class="mt-4">
-                        <h4 class="text-lg font-semibold">Total Spent:</h4>
-                        <p>Ksh {{ "{:,.2f}".format(event.spent_budget or 0) }}</p>
                     </div>
                 </div>
             </div>
@@ -227,7 +315,11 @@
 <div id="editEventModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
     <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <h3 class="text-lg font-bold mb-4">Edit Event Details</h3>
-        <form id="editEventForm" method="POST">
+        {% if event.event_id %}
+            <form id="editEventForm" action="{{ url_for('app_views.event_details', event_id=event.event_id) }}" method="POST">
+        {% else %}
+            <form id="createEventForm" action="{{ url_for('app_views.create_event') }}" method="POST">
+        {% endif %}
             <input type="hidden" name="_method" value="PUT">
             <div class="mb-4">
                 <label for="name" class="block text-sm font-medium text-gray-700">Event Name</label>
@@ -297,11 +389,92 @@
         </form>
     </div>
 </div>
+
+<!-- Add Guest Modal -->
+<div id="guestModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold" id="guestModalTitle">Add New Guest</h3>
+            <button onclick="closeGuestModal()" class="text-gray-600 hover:text-gray-800">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <form id="guestForm" onsubmit="handleGuestSubmit(event)">
+            <input type="hidden" id="guestId" value="">
+            <div class="mb-4">
+                <label for="guestName" class="block text-sm font-medium text-gray-700">Name</label>
+                <input type="text" id="guestName" required
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+            </div>
+            <div class="mb-4">
+                <label for="guestEmail" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="guestEmail" required
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+            </div>
+            <div class="mb-4">
+                <label for="guestPhone" class="block text-sm font-medium text-gray-700">Phone (Optional)</label>
+                <input type="tel" id="guestPhone"
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeGuestModal()"
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                    Save Guest
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Expense Modal -->
+<div id="expenseModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold" id="expenseModalTitle">Add New Expense</h3>
+            <button onclick="closeExpenseModal()" class="text-gray-600 hover:text-gray-800">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <form id="expenseForm" onsubmit="handleExpenseSubmit(event)">
+            <input type="hidden" id="originalCategory" value="">
+            <div class="mb-4">
+                <label for="expenseCategory" class="block text-sm font-medium text-gray-700">Category</label>
+                <input type="text" id="expenseCategory" required
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+            </div>
+            <div class="mb-4">
+                <label for="expenseAmount" class="block text-sm font-medium text-gray-700">Amount (Ksh)</label>
+                <input type="number" id="expenseAmount" required min="0" step="0.01"
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeExpenseModal()"
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                    Save Expense
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
 <script>
+    const eventId = {{ event.event_id }};
+
     // Tab switching functionality
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -395,6 +568,7 @@
             return;
         }
 
+        // This sends DELETE request to /event/<event_id>
         fetch(window.location.href, {
             method: 'DELETE',
             headers: {
@@ -405,7 +579,8 @@
         .then(data => {
             if (data.success) {
                 alert(data.message);
-                window.location.href = "{{ url_for('app_views.events') }}";
+                // This redirects to /events after successful deletion
+                window.location.href = '{{ url_for("app_views.events") }}';
             } else {
                 alert('Error: ' + data.error);
             }
@@ -572,6 +747,268 @@
             event.target.checked = !completed;
         }
     }
+
+    // Guest CRUD Operations
+    function openGuestModal(guestId = null) {
+        const modal = document.getElementById('guestModal');
+        const form = document.getElementById('guestForm');
+        const title = document.getElementById('guestModalTitle');
+        
+        if (guestId) {
+            title.textContent = 'Edit Guest';
+            const row = document.getElementById(`guest-${guestId}`);
+            const cells = row.getElementsByTagName('td');
+            
+            document.getElementById('guestId').value = guestId;
+            document.getElementById('guestName').value = cells[0].textContent;
+            document.getElementById('guestEmail').value = cells[1].textContent;
+            document.getElementById('guestPhone').value = cells[2].textContent === 'N/A' ? '' : cells[2].textContent;
+        } else {
+            title.textContent = 'Add New Guest';
+            form.reset();
+            document.getElementById('guestId').value = '';
+        }
+        
+        modal.classList.remove('hidden');
+    }
+
+    function closeGuestModal() {
+        document.getElementById('guestModal').classList.add('hidden');
+    }
+
+    async function handleGuestSubmit(event) {
+        event.preventDefault();
+        const guestId = document.getElementById('guestId').value;
+        const guestData = {
+            name: document.getElementById('guestName').value,
+            email: document.getElementById('guestEmail').value,
+            phone: document.getElementById('guestPhone').value,
+            event_id: {{ event.event_id }}
+        }
+
+        try {
+            const response = await fetch(`/event/{{ event.event_id }}/guests${guestId ? `/${guestId}` : ''}`, {
+                method: guestId ? 'PUT' : 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(guestData)
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                showFlashMessage(data.message, 'success');
+                closeGuestModal();
+                location.reload();
+            } else {
+                showFlashMessage(data.error, 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showFlashMessage('An error occurred while saving the guest', 'error');
+        }
+    }
+
+    async function deleteGuest(guestId) {
+        if (!confirm('Are you sure you want to delete this guest?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/event/${eventId}/guests`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ guest_id: guestId })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                showFlashMessage(data.message, 'success');
+                document.getElementById(`guest-${guestId}`).remove();
+            } else {
+                showFlashMessage(data.error, 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showFlashMessage('An error occurred while deleting the guest', 'error');
+        }
+    }
+
+    async function sendInvitation(guestId) {
+        try {
+            const response = await fetch(`/event/{{ event.event_id }}/guests/${guestId}/invite`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                showFlashMessage('Invitation sent successfully!', 'success');
+            } else {
+                showFlashMessage(data.error, 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showFlashMessage('An error occurred while sending the invitation', 'error');
+        }
+    }
+
+    async function sendBulkInvitations() {
+        if (!confirm('Are you sure you want to send invitations to all pending guests?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/event/{{ event.event_id }}/send-all-invitations`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                showFlashMessage('All invitations sent successfully!', 'success');
+            } else {
+                showFlashMessage(data.error, 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showFlashMessage('An error occurred while sending invitations', 'error');
+        }
+    }
+
+    // Expense CRUD Operations
+    function openExpenseModal(category = null, amount = null) {
+        const modal = document.getElementById('expenseModal');
+        const form = document.getElementById('expenseForm');
+        const title = document.getElementById('expenseModalTitle');
+        
+        if (category) {
+            title.textContent = 'Edit Expense';
+            document.getElementById('originalCategory').value = category;
+            document.getElementById('expenseCategory').value = category;
+            document.getElementById('expenseAmount').value = amount;
+        } else {
+            title.textContent = 'Add New Expense';
+            form.reset();
+            document.getElementById('originalCategory').value = '';
+        }
+        
+        modal.classList.remove('hidden');
+    }
+
+    function closeExpenseModal() {
+        document.getElementById('expenseModal').classList.add('hidden');
+    }
+
+    async function handleExpenseSubmit(event) {
+        event.preventDefault();
+        
+        const category = document.getElementById('expenseCategory').value;
+        const amount = document.getElementById('expenseAmount').value;
+        const originalCategory = document.getElementById('originalCategory').value;
+        
+        const method = originalCategory ? 'PUT' : 'POST';
+        const url = `/event/${eventId}/expense/${encodeURIComponent(originalCategory || category)}`;
+        
+        console.log('Submitting expense:', { method, url, category, amount }); // Debug log
+        
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    category: category,
+                    amount: parseFloat(amount)
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.success) {
+                showFlashMessage(data.message || 'Expense saved successfully', 'success');
+                closeExpenseModal();
+                window.location.reload();
+            } else {
+                showFlashMessage(data.error || 'Error saving expense', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showFlashMessage('An error occurred while saving the expense', 'error');
+        }
+    }
+
+    async function deleteExpense(category) {
+        if (!confirm('Are you sure you want to delete this expense?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/event/${eventId}/expense/${encodeURIComponent(category)}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                showFlashMessage(data.message || 'Expense deleted successfully', 'success');
+                window.location.reload();
+            } else {
+                showFlashMessage(data.error || 'Error deleting expense', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showFlashMessage('An error occurred while deleting the expense', 'error');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if is_new %}
+        const createEventForm = document.getElementById('createEventForm');
+        createEventForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            try {
+                const formData = new FormData(this);
+                const response = await fetch('{{ url_for("app_views.create_event") }}', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = `/event/${data.event_id}`;
+                } else {
+                    alert(data.error || 'Error creating event');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while creating the event');
+            }
+        });
+        {% endif %}
+    });
 </script>
 {% endblock %}
+
+
+
+
 

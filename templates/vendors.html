@@ -4,12 +4,39 @@
 
 {% block content %}
 <div class="container mx-auto p-6">
+    {% if event_id %}
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">Select Vendors</h1>
+        <a href="{{ url_for('app_views.event_details', event_id=event_id) }}" 
+           class="inline-flex items-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-md transition-colors">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Done Adding Vendors
+        </a>
+    </div>
+    {% else %}
     <h1 class="text-3xl font-bold mb-6">Vendors</h1>
+    {% endif %}
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="mb-4 p-4 rounded-md {{ 'bg-red-100 text-red-700' if category == 'error' else 'bg-green-100 text-green-700' }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
     <div class="flex flex-col md:flex-row gap-4 mb-6">
         <div class="relative flex-grow">
             <i class="fas fa-search absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-            <input type="text" id="searchInput" placeholder="Search vendors..." class="w-full pl-8 pr-2 py-2 border rounded-md">
+            <input type="text" 
+                   id="searchInput" 
+                   placeholder="Search vendors..." 
+                   class="w-full pl-8 pr-2 py-2 border rounded-md">
         </div>
         <select id="filterSelect" class="w-full md:w-[180px] border rounded-md p-2">
             <option value="">All Types</option>
@@ -23,52 +50,70 @@
         </select>
     </div>
 
-    <div id="vendorGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div id="vendorGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {% for vendor in vendors %}
-            <div class="vendor-card bg-white shadow-md rounded-lg p-4">
-                <img src="{{ vendor.image_path }}" alt="{{ vendor.name }}" class="w-full h-48 object-cover mb-4 rounded-md">
+            <div class="border rounded-lg p-4">
+                <h3 class="text-xl font-bold">{{ vendor.name }}</h3>
+                <img src="{{ vendor.image_path }}" 
+                     alt="{{ vendor.name }}" 
+                     class="w-full h-48 object-cover mb-4 rounded-md"
+                     loading="lazy">  <!-- Add lazy loading -->
                 <div class="flex items-center mb-2">
                     <span class="text-yellow-400 mr-1">★</span>
                     <span class="text-gray-600">{{ vendor.star_rating }}</span>
                 </div>
-                <h3 class="text-xl font-semibold mb-2">{{ vendor.name }}</h3>
                 <p class="text-gray-600 mb-2">Category: {{ vendor.category }}</p>
                 <p class="text-gray-600 mb-2">{{ vendor.description }}</p>
                 <p class="text-gray-600 mb-2">Phone: {{ vendor.phone_number }}</p>
                 <p class="text-gray-600 mb-2">Email: {{ vendor.email }}</p>
                 <p class="text-gray-600 mb-2">Service Fee: ${{ vendor.service_fee }}</p>
+                
+                {% if event_id %}
+                    {% if vendor in event_vendors %}
+                        <span class="text-green-500 font-semibold">✓ Already Added</span>
+                    {% else %}
+                        <button onclick="addVendorToEvent('{{ vendor.vendor_id }}', '{{ event_id }}')"
+                                class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                            Add Vendor
+                        </button>
+                    {% endif %}
+                {% endif %}
             </div>
         {% endfor %}
     </div>
 
-    {% if not vendors %}
-        <p id="noVendorsMessage" class="text-center mt-6 text-gray-500">No vendors found matching your criteria.</p>
-    {% endif %}
+    <p id="noVendorsMessage" class="text-center mt-6 text-gray-500 hidden">
+        No vendors found matching your criteria.
+    </p>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    const searchInput = document.getElementById('searchInput');
-    const filterSelect = document.getElementById('filterSelect');
-    const vendorCards = document.querySelectorAll('.vendor-card');
-
-    function filterVendors() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const filterType = filterSelect.value.toLowerCase();
-
-        vendorCards.forEach(card => {
-            const vendorName = card.querySelector('h3').textContent.toLowerCase();
-            const vendorType = card.querySelector('p').textContent.toLowerCase();
-
-            const matchesSearch = vendorName.includes(searchTerm);
-            const matchesFilter = filterType === '' || vendorType.includes(filterType);
-
-            card.style.display = matchesSearch && matchesFilter ? 'block' : 'none';
-        });
-    }
-
-    searchInput.addEventListener('input', filterVendors);
-    filterSelect.addEventListener('change', filterVendors);
+function addVendorToEvent(vendorId, eventId) {
+    fetch('/vendors', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            vendor_id: vendorId,
+            event_id: eventId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+        } else {
+            // Reload the page to show updated status
+            window.location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while adding the vendor');
+    });
+}
 </script>
 {% endblock %}

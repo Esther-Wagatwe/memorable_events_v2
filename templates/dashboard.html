@@ -3,126 +3,295 @@
 {% block title %}Dashboard - Memorable Events{% endblock %}
 
 {% block content %}
-<div class="container mx-auto p-8">
-    <h2 class="text-3xl font-bold mb-8">Dashboard</h2>
+<div class="container max-w-[1920px] mx-auto p-4 sm:p-8">
+    <!-- Stats Cards Section -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <!-- Future Events Card -->
+        <div class="bg-gray-800/90 backdrop-blur-sm bg-gradient-to-br from-gray-700/50 rounded-xl shadow-md p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+            <h2 class="text-xl font-bold text-white mb-4">Future Events</h2>
+            <p class="text-3xl font-bold text-white">{{ future_events|length }}</p>
+        </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Event Overview -->
-        <div class="bg-white shadow-md rounded-lg">
-            <div class="p-4">
-                <h3 class="text-lg font-bold">Upcoming Event</h3>
-                <p class="text-sm text-gray-500">John's Wedding</p>
-            </div>
-            <div class="p-4">
-                <p class="text-sm text-gray-500 mb-2">June 15, 2024</p>
-                <div class="w-full bg-gray-200 rounded-full h-2.5">
-                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: 66%"></div>
-                </div>
-                <p class="text-sm text-gray-500 mt-2">66% complete</p>
+        <!-- Guest Status Card -->
+        <div class="bg-gray-800/90 backdrop-blur-sm bg-gradient-to-br from-gray-700/50 rounded-xl shadow-md p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+            <h2 class="text-xl font-bold text-white mb-4">Guest Status</h2>
+            <div class="flex flex-col">
+                <p class="text-base text-gray-400">Confirmed guests: <span class="font-bold text-white">{{ confirmed_guests }}</span></p>
+                <p class="text-base text-gray-400">Pending guests: <span class="font-bold text-white">{{ pending_guests }}</span></p>
+                <p class="text-lg font-bold text-white mt-2">Total guests: {{ confirmed_guests + pending_guests }}</p>
             </div>
         </div>
 
-        <!-- Task Management -->
-        <div class="bg-white shadow-md rounded-lg">
-            <div class="p-4">
-                <h3 class="text-lg font-bold">Tasks</h3>
-                <p class="text-sm text-gray-500">5 tasks remaining</p>
-            </div>
-            <div class="p-4">
-                <ul class="space-y-2">
-                    <li class="flex items-center">
-                        <input type="checkbox" class="mr-2">
-                        <span>Book venue</span>
-                    </li>
-                    <li class="flex items-center">
-                        <input type="checkbox" class="mr-2">
-                        <span>Send invitations</span>
-                    </li>
-                    <li class="flex items-center">
-                        <input type="checkbox" class="mr-2">
-                        <span>Hire photographer</span>
-                    </li>
-                </ul>
+        <!-- Vendor Status Card -->
+        <div class="bg-gray-800/90 backdrop-blur-sm bg-gradient-to-br from-gray-700/50 rounded-xl shadow-md p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+            <h2 class="text-xl font-bold text-white mb-4">Vendors</h2>
+            <div class="flex flex-col">
+                <p class="text-base text-gray-400">Confirmed vendors: <span class="font-bold text-white">{{ confirmed_vendors }}</span></p>
+                <p class="text-base text-gray-400">Pending vendors: <span class="font-bold text-white">{{ pending_vendors }}</span></p>
+                <p class="text-lg font-bold text-white mt-2">Total vendors: {{ vendors|length }}</p>
             </div>
         </div>
 
-        <!-- Guest Management -->
-        <div class="bg-white shadow-md rounded-lg">
-            <div class="p-4">
-                <h3 class="text-lg font-bold">Guest List</h3>
-                <p class="text-sm text-gray-500">75 confirmed, 25 pending</p>
-            </div>
-            <div class="p-4">
-                <div class="flex items-center space-x-2">
-                    <button class="outline-none p-2 flex items-center">
-                        <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                        </svg>
-                        Send Reminders
-                    </button>
-                    <button class="outline-none p-2 flex items-center">
-                        <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
-                        Add Guests
-                    </button>
-                </div>
-            </div>
+        <!-- Tasks Overview Card -->
+        <div class="bg-gray-800/90 backdrop-blur-sm bg-gradient-to-br from-gray-700/50 rounded-xl shadow-md p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+            <h2 class="text-2xl font-bold text-white mb-4">Pending Tasks</h2>
+            <p class="text-4xl font-bold text-white">{{ remaining_tasks|length }}</p>
         </div>
+    </section>
 
-        <!-- Quick Actions -->
-        <div class="bg-white shadow-md rounded-lg">
-            <div class="p-4">
-                <h3 class="text-lg font-bold">Quick Actions</h3>
-            </div>
-            <div class="p-4">
-                <div class="grid grid-cols-2 gap-2">
-                    <button class="outline-none p-2">Create Event</button>
-                    <button class="outline-none p-2">Add Task</button>
-                    <button class="outline-none p-2">Find Vendor</button>
-                    <button class="outline-none p-2">Send Invites</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Tasks and Events Grid -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+        <!-- Future Events List -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">Future Events</h2>
 
-    <!-- Vendor Management -->
-    <div class="mt-8 bg-white shadow-md rounded-lg">
-        <div class="p-4">
-            <h3 class="text-lg font-bold">Vendors</h3>
-            <p class="text-sm text-gray-500">3 confirmed, 2 pending</p>
-        </div>
-        <div class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for vendor in vendors %}
-            <div class="bg-white shadow-md rounded-lg overflow-hidden">
-                <img src="{{ vendor.image_path }}" alt="{{ vendor.name }}" class="w-full h-48 object-cover">
-                <div class="p-4">
-                    <h4 class="font-semibold text-lg mb-2">{{ vendor.name }}</h4>
-                    <p class="text-sm text-gray-600 mb-2">{{ vendor.category }}</p>
-                    <div class="flex items-center mb-2">
-                        <span class="text-yellow-400">
-                            {% for i in range(vendor.rating|default(0)) %}★{% endfor %}
-                        </span>
-                        <span class="text-gray-400">
-                            {% for i in range(5 - vendor.rating|default(0)) %}★{% endfor %}
-                        </span>
+            </div>
+            {% if future_events %}
+                <div class="space-y-4">
+                    {% for event in future_events[:3] %}  <!-- Show only first 3 events -->
+                    <div class="border-b border-gray-200 pb-4 last:border-0">
+                        <h3 class="text-xl font-semibold text-gray-900">{{ event.name }}</h3>
+                        <p class="text-lg text-gray-600">{{ event.date.strftime('%B %d, %Y') }}</p>
+                        <p class="text-lg text-gray-600">Location: {{ event.location|default('TBD') }}</p>
+                        <div class="mt-2">
+                            <a href="{{ url_for('app_views.event_details', event_id=event.event_id) }}" 
+                               class="text-lg text-blue-600 hover:text-blue-800 font-medium transition-colors">
+                                View Details
+                            </a>
+                        </div>
                     </div>
-                    <p class="text-sm text-gray-700 mb-2">{{ vendor.description|truncate(100) }}</p>
-                    <p class="text-sm mb-1"><strong>Phone:</strong> {{ vendor.phone_number }}</p>
-                    <p class="text-sm mb-1"><strong>Email:</strong> {{ vendor.email }}</p>
-                    {% if vendor.service_fee %}
-                    <p class="text-sm mb-1"><strong>Service Fee:</strong> ${{ vendor.service_fee }}</p>
-                    {% endif %}
+                    {% endfor %}
                 </div>
-            </div>
-            {% endfor %}
+                
+                {% if future_events|length > 3 %}
+                <div class="mt-6 text-center pt-4 border-t border-gray-200">
+                    <a href="{{ url_for('app_views.events') }}" 
+                       class="text-lg font-medium text-blue-600 hover:text-blue-800 transition-colors">
+                        View all {{ future_events|length }} events
+                    </a>
+                </div>
+                {% endif %}
+            {% else %}
+                <p class="text-lg text-gray-500">No upcoming events scheduled</p>
+            {% endif %}
         </div>
-    </div>
+
+        <!-- Tasks List -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Pending Tasks</h2>
+            {% if remaining_tasks %}
+                <div class="max-h-[400px] overflow-y-auto pr-2">
+                    {% set current_event = namespace(id=None) %}
+                    {% for task in remaining_tasks %}
+                        {% if task.event_id != current_event.id %}
+                            {% if not loop.first %}</div>{% endif %}
+                            {% set current_event.id = task.event_id %}
+                            <div class="mb-4">
+                                <h3 class="text-xl font-semibold text-gray-900 mb-2 pb-2 border-b border-gray-200">
+                                    {{ task.event.name }}
+                                    <span class="text-lg text-gray-500">
+                                        ({{ task.event.date.strftime('%B %d, %Y') }})
+                                    </span>
+                                </h3>
+                                <div class="space-y-3">
+                        {% endif %}
+                        <div class="flex items-center gap-3 pl-2 {% if task.status == 'completed' %}opacity-50{% endif %} transition-opacity duration-300">
+                            <input type="checkbox" 
+                                   class="w-5 h-5 rounded border-gray-300 cursor-pointer"
+                                   data-task-id="{{ task.task_id }}"
+                                   data-event-id="{{ task.event_id }}"
+                                   {% if task.status == 'completed' %}checked{% endif %}>
+                            <div class="flex-1">
+                                <p class="text-lg text-gray-900">{{ task.description }}</p>
+                                {% if task.due_date %}
+                                <p class="text-base text-gray-500">Due: {{ task.due_date.strftime('%B %d, %Y') }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if loop.last %}</div></div>{% endif %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-lg text-gray-500">No pending tasks</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Vendors Section (Completely Separate) -->
+    <section class="mt-16">
+        <h2 class="text-2xl font-bold text-gray-900 mb-8">Vendor Management</h2>
+
+        <!-- Vendor List -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-xl font-bold text-gray-900">Your Vendors</h3>
+            </div>
+            
+            {% if vendors %}
+            <div class="divide-y divide-gray-200">
+                {% for vendor in vendors %}
+                <div class="p-6 flex items-center justify-between hover:bg-gray-50">
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-xl font-semibold text-gray-900">{{ vendor.name }}</h4>
+                            <span class="px-2 py-1 text-base rounded-full {% if vendor.status == 'confirmed' %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                {{ vendor.status|capitalize }}
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-base text-gray-600">
+                            <p>Category: {{ vendor.category }}</p>
+                            {% if vendor.service_fee %}
+                            <p>Fee: KES {{ "{:,.0f}".format(vendor.service_fee) }}</p>
+                            {% endif %}
+                            {% if vendor.event %}
+                            <p>Event: {{ vendor.event.name }}</p>
+                            {% endif %}
+                            {% if vendor.booking_date %}
+                            <p>Booking Date: {{ vendor.booking_date.strftime('%B %d, %Y') }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <form method="POST" 
+                              action="{{ url_for('app_views.update_vendor_status', event_id=vendor.event_id, vendor_id=vendor.vendor_id) }}" 
+                              class="inline">
+                            <select name="status" 
+                                    onchange="this.form.submit()" 
+                                    class="rounded-lg border-gray-300 text-base focus:ring-black focus:border-black">
+                                <option value="pending" {% if vendor.status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="confirmed" {% if vendor.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                                <option value="cancelled" {% if vendor.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                            </select>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="p-6 text-center text-gray-500">
+                <p class="text-lg">No vendors added yet</p>
+                <a href="{{ url_for('app_views.vendors') }}" 
+                   class="inline-block mt-4 text-lg text-blue-600 hover:text-blue-800 font-medium">
+                    Browse Vendors
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </section>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Any additional JavaScript specific to the dashboard can go here
+    // Function to show flash messages
+    function showFlashMessage(message, type = 'success') {
+        const flashContainer = document.createElement('div');
+        flashContainer.className = `fixed top-4 right-4 p-4 rounded-lg text-white transition-opacity duration-500 ${
+            type === 'success' ? 'bg-green-500' : 'bg-red-500'
+        }`;
+        flashContainer.style.zIndex = '9999';
+        
+        const messageText = document.createElement('p');
+        messageText.className = 'flex items-center';
+        messageText.innerHTML = `
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                ${type === 'success' 
+                    ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>'
+                    : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>'
+                }
+            </svg>
+            ${message}
+        `;
+        
+        flashContainer.appendChild(messageText);
+        document.body.appendChild(flashContainer);
+
+        setTimeout(() => {
+            flashContainer.classList.add('opacity-0');
+            setTimeout(() => {
+                flashContainer.remove();
+            }, 500);
+        }, 3000);
+    }
+
+    // Function to update task status
+    async function updateTaskStatus(taskId, eventId, completed) {
+        try {
+            const response = await fetch(`/event/${eventId}/tasks`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    task_id: taskId,
+                    status: completed ? 'completed' : 'pending'
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                showFlashMessage(data.message, 'success');
+                
+                // Update UI and reload page after a short delay
+                const taskElement = document.querySelector(`[data-task-id="${taskId}"]`).closest('.flex');
+                if (completed) {
+                    taskElement.classList.add('opacity-50');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    taskElement.classList.remove('opacity-50');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                }
+            } else {
+                showFlashMessage(data.error, 'error');
+                // Revert checkbox state
+                const checkbox = document.querySelector(`[data-task-id="${taskId}"]`);
+                checkbox.checked = !completed;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showFlashMessage('An error occurred while updating the task status', 'error');
+            // Revert checkbox state
+            const checkbox = document.querySelector(`[data-task-id="${taskId}"]`);
+            checkbox.checked = !completed;
+        }
+    }
+
+    // Function to update the pending tasks count in the stats card
+    function updatePendingTasksCount() {
+        const pendingTasksElement = document.querySelector('.text-4xl.font-bold.text-white');
+        if (pendingTasksElement) {
+            const currentCount = parseInt(pendingTasksElement.textContent);
+            pendingTasksElement.textContent = Math.max(0, currentCount - 1);
+        }
+    }
+
+    // Add event listeners when the DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"][data-task-id]');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const taskId = this.getAttribute('data-task-id');
+                const eventId = this.getAttribute('data-event-id');
+                updateTaskStatus(taskId, eventId, this.checked);
+            });
+        });
+    });
 </script>
+
+<style>
+    .transition-opacity {
+        transition: opacity 0.5s ease-in-out;
+    }
+    
+    .opacity-0 {
+        opacity: 0;
+    }
+</style>
 {% endblock %}
+
