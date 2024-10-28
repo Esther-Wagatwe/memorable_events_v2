@@ -68,7 +68,10 @@ class Vendor(db.Model):
             'email': self.email,
             'service_fee': self.service_fee,
             'rating': self.rating,
-            'status': self.status
+            'status': self.status,
+            'events': [{'event_id': event.event_id, 
+                       'name': event.name,
+                       'date': event.date} for event in self.events]
         }
     
     def __repr__(self):

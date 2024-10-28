@@ -118,66 +118,81 @@
         </div>
     </section>
 
-    <!-- Vendors Section (Completely Separate) -->
+    <!-- Vendors Section -->
     <section class="mt-16">
         <h2 class="text-2xl font-bold text-gray-900 mb-8">Vendor Management</h2>
 
-        <!-- Vendor List -->
-        <div class="bg-white rounded-xl shadow-md overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-xl font-bold text-gray-900">Your Vendors</h3>
-            </div>
-            
-            {% if vendors %}
-            <div class="divide-y divide-gray-200">
-                {% for vendor in vendors %}
-                <div class="p-6 flex items-center justify-between hover:bg-gray-50">
-                    <div class="flex-1">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="text-xl font-semibold text-gray-900">{{ vendor.name }}</h4>
-                            <span class="px-2 py-1 text-base rounded-full {% if vendor.status == 'confirmed' %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                                {{ vendor.status|capitalize }}
+        {% if vendors %}
+            {% set grouped_vendors = {} %}
+            {% for vendor in vendors %}
+                {% for event in vendor.events %}
+                    {% if event.event_id not in grouped_vendors %}
+                        {% set _ = grouped_vendors.update({event.event_id: {'event': event, 'vendors': []}}) %}
+                    {% endif %}
+                    {% set _ = grouped_vendors[event.event_id]['vendors'].append(vendor) %}
+                {% endfor %}
+            {% endfor %}
+
+            {% for event_id, group in grouped_vendors.items() %}
+                <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                        <h3 class="text-xl font-bold text-gray-900">
+                            {{ group.event.name }} Vendors
+                            <span class="text-sm text-gray-500 font-normal">
+                                ({{ group.event.date.strftime('%B %d, %Y') }})
                             </span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4 text-base text-gray-600">
-                            <p>Category: {{ vendor.category }}</p>
-                            {% if vendor.service_fee %}
-                            <p>Fee: KES {{ "{:,.0f}".format(vendor.service_fee) }}</p>
-                            {% endif %}
-                            {% if vendor.event %}
-                            <p>Event: {{ vendor.event.name }}</p>
-                            {% endif %}
-                            {% if vendor.booking_date %}
-                            <p>Booking Date: {{ vendor.booking_date.strftime('%B %d, %Y') }}</p>
-                            {% endif %}
-                        </div>
+                        </h3>
                     </div>
-                    <div class="ml-4">
-                        <form method="POST" 
-                              action="{{ url_for('app_views.update_vendor_status', event_id=vendor.event_id, vendor_id=vendor.vendor_id) }}" 
-                              class="inline">
-                            <select name="status" 
-                                    onchange="this.form.submit()" 
-                                    class="rounded-lg border-gray-300 text-base focus:ring-black focus:border-black">
-                                <option value="pending" {% if vendor.status == 'pending' %}selected{% endif %}>Pending</option>
-                                <option value="confirmed" {% if vendor.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
-                                <option value="cancelled" {% if vendor.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
-                            </select>
-                        </form>
+                    
+                    <div class="divide-y divide-gray-200">
+                        {% for vendor in group.vendors %}
+                        <div class="p-6 flex items-center justify-between hover:bg-gray-50">
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="text-xl font-semibold text-gray-900">{{ vendor.name }}</h4>
+                                    <span class="px-2 py-1 text-base rounded-full 
+                                        {% if vendor.status == 'confirmed' %}bg-green-100 text-green-800
+                                        {% elif vendor.status == 'cancelled' %}bg-red-100 text-red-800
+                                        {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                        {{ vendor.status|capitalize }}
+                                    </span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4 text-base text-gray-600">
+                                    <p>Category: {{ vendor.category }}</p>
+                                    {% if vendor.service_fee %}
+                                    <p>Fee: KES {{ "{:,.0f}".format(vendor.service_fee) }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <form method="POST" 
+                                      action="{{ url_for('app_views.update_vendor_status', event_id=event_id, vendor_id=vendor.vendor_id) }}" 
+                                      class="inline">
+                                    <select name="status" 
+                                            onchange="this.form.submit()" 
+                                            class="rounded-lg border-gray-300 text-base focus:ring-black focus:border-black">
+                                        <option value="pending" {% if vendor.status == 'pending' %}selected{% endif %}>Pending</option>
+                                        <option value="confirmed" {% if vendor.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                                        <option value="cancelled" {% if vendor.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                    </select>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
-                {% endfor %}
+            {% endfor %}
+        {% else %}
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="p-6 text-center text-gray-500">
+                    <p class="text-lg">No vendors added to any events yet</p>
+                    <a href="{{ url_for('app_views.vendors') }}" 
+                       class="inline-block mt-4 text-lg text-blue-600 hover:text-blue-800 font-medium">
+                        Browse Vendors
+                    </a>
+                </div>
             </div>
-            {% else %}
-            <div class="p-6 text-center text-gray-500">
-                <p class="text-lg">No vendors added yet</p>
-                <a href="{{ url_for('app_views.vendors') }}" 
-                   class="inline-block mt-4 text-lg text-blue-600 hover:text-blue-800 font-medium">
-                    Browse Vendors
-                </a>
-            </div>
-            {% endif %}
-        </div>
+        {% endif %}
     </section>
 </div>
 {% endblock %}
