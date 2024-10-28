@@ -84,9 +84,9 @@ Memorable Events is a comprehensive event management application that simplifies
 ![Vendors Page](static/images/vendor_screenshot.png)
 - Use the vendors page to browse through a comprehensive list of available vendors and choose the best fit for your event!
 
-### Tasks Page
-![Tasks Page](static/images/tasks_screenshot.png)
-- Use the tasks page to view all tasks for your events, helping you monitor your progress and ensure everything is on track.
+### Events Page
+![Events Page](static/images/events_screenshot.png)
+- Use the events page to view all your events, helping you see all your upcoming events.
 
 ### Event Details Page
 ![Event Details Page](static/images/event_details_screenshot.png)
