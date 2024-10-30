@@ -14,8 +14,10 @@ from flask import render_template, redirect, url_for, flash, request, jsonify
 from views import app_views
 from models.vendor import Vendor
 from models.event import Event
+from models.review import Review
 from extensions import db
 from flask_login import login_required, current_user
+from datetime import datetime
 
 @app_views.route('/vendors', methods=['GET', 'POST', 'PUT', 'DELETE'])
 @login_required
@@ -186,3 +188,68 @@ def vendors():
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': str(e)}), 400
+
+@app_views.route('/api/reviews', methods=['POST'])
+@login_required
+def create_review():
+    try:
+        data = request.get_json()
+        
+        if not data or 'vendor_id' not in data or 'rating' not in data or 'comment' not in data:
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        # Check if user has already reviewed this vendor
+        existing_review = Review.query.filter_by(
+            vendor_id=data['vendor_id'],
+            user_id=current_user.user_id
+        ).first()
+        
+        if existing_review:
+            return jsonify({'error': 'You have already reviewed this vendor'}), 400
+        
+        review = Review(
+            vendor_id=data['vendor_id'],
+            user_id=current_user.user_id,
+            rating=data['rating'],
+            comment=data['comment']
+        )
+        
+        db.session.add(review)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Review submitted successfully',
+            'review': {
+                'user_name': current_user.username,
+                'rating': review.rating,
+                'comment': review.comment,
+                'created_at': review.created_at.strftime('%B %d, %Y') if review.created_at else None
+            }
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating review: {str(e)}")
+        return jsonify({'error': 'Failed to create review'}), 500
+
+@app_views.route('/api/vendors/<int:vendor_id>/reviews', methods=['GET'])
+def get_vendor_reviews(vendor_id):
+    try:
+        vendor = Vendor.query.get_or_404(vendor_id)
+        reviews = []
+        
+        for review in vendor.reviews:
+            reviews.append({
+                'user_name': review.user.username,
+                'rating': review.rating,
+                'comment': review.comment,
+                'created_at': review.created_at.strftime('%B %d, %Y') if review.created_at else None
+            })
+        
+        return jsonify({
+            'vendor_name': vendor.name,
+            'reviews': reviews
+        })
+    except Exception as e:
+        print(f"Error fetching reviews: {str(e)}")
+        return jsonify({'error': 'Failed to fetch reviews'}), 500

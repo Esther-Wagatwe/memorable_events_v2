@@ -58,10 +58,6 @@
                      alt="{{ vendor.name }}" 
                      class="w-full h-48 object-cover mb-4 rounded-md"
                      loading="lazy">  <!-- Add lazy loading -->
-                <div class="flex items-center mb-2">
-                    <span class="text-yellow-400 mr-1">★</span>
-                    <span class="text-gray-600">{{ vendor.star_rating }}</span>
-                </div>
                 <p class="text-gray-600 mb-2">Category: {{ vendor.category }}</p>
                 <p class="text-gray-600 mb-2">{{ vendor.description }}</p>
                 <p class="text-gray-600 mb-2">Phone: {{ vendor.phone_number }}</p>
@@ -78,6 +74,60 @@
                         </button>
                     {% endif %}
                 {% endif %}
+
+                <!-- Review Section -->
+                <div class="mt-2">
+                    <div class="flex items-center">
+                        <div class="rating-stars {% if vendor in user_reviewed_vendors %}cursor-not-allowed opacity-75{% else %}cursor-pointer{% endif %}" 
+                             data-vendor-id="{{ vendor.vendor_id }}">
+                            {% for i in range(5) %}
+                                <span class="star text-2xl {% if vendor.average_rating and i < vendor.average_rating|round|int %}text-yellow-400{% else %}text-gray-300{% endif %}">★</span>
+                            {% endfor %}
+                        </div>
+                        <span class="ml-2 text-sm text-gray-600">({{ vendor.reviews|length }} reviews)</span>
+                        {% if vendor in user_reviewed_vendors %}
+                            <span class="ml-2 text-sm text-green-600">✓ You've reviewed this vendor</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- View reviews button -->
+                    <div class="mt-2">
+                        <button onclick="showReviews('{{ vendor.vendor_id }}')" 
+                                class="text-blue-600 hover:text-blue-800 font-medium">
+                            View Reviews ({{ vendor.reviews|length }})
+                        </button>
+                    </div>
+                </div>
+
+                <!-- rating modal -->
+                <div id="ratingModal-{{ vendor.vendor_id }}" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                        <div class="mt-3">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-medium text-gray-900">Rate and Review</h3>
+                                <button type="button" class="cancel-review text-gray-500 hover:text-gray-700">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <form id="reviewForm-{{ vendor.vendor_id }}" class="space-y-4">
+                                <div class="rating-input flex space-x-1">
+                                    {% for i in range(5) %}
+                                        <span class="star-input text-2xl cursor-pointer text-gray-300">★</span>
+                                    {% endfor %}
+                                </div>
+                                <div>
+                                    <textarea name="comment" rows="4" class="w-full border rounded-md p-2" placeholder="Write your review here..."></textarea>
+                                </div>
+                                <div class="flex justify-end space-x-2">
+                                    <button type="button" class="cancel-review px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
+                                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Submit</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
         {% endfor %}
     </div>
@@ -86,38 +136,48 @@
         No vendors found matching your criteria.
     </p>
 </div>
+
+<!-- review modal -->
+<div id="reviewsModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold" id="reviewsModalTitle">Reviews</h3>
+            <button onclick="closeReviewsModal()" class="text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div id="reviewsList" class="max-h-[400px] overflow-y-auto">
+            <!-- Reviews will be populated here -->
+        </div>
+    </div>
+</div>
+
+<!-- Add this popup message container -->
+<div id="messagePopup" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full" id="popupIcon">
+                <!-- Icon will be injected by JavaScript -->
+            </div>
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mt-2" id="popupTitle"></h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500" id="popupMessage"></p>
+            </div>
+            <div class="items-center px-4 py-3">
+                <button id="closePopup" class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
 <script>
-function addVendorToEvent(vendorId, eventId) {
-    fetch('/vendors', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            vendor_id: vendorId,
-            event_id: eventId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            alert(data.error);
-        } else {
-            // Reload the page to show updated status
-            window.location.reload();
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while adding the vendor');
-    });
-}
-
-//functions for filtering
 document.addEventListener('DOMContentLoaded', function() {
     const filterSelect = document.getElementById('filterSelect');
     const searchInput = document.getElementById('searchInput');
@@ -166,6 +226,203 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add event listeners
     filterSelect.addEventListener('change', filterVendors);
     searchInput.addEventListener('input', filterVendors);
+
+    function showFlashMessage(message) {
+        const flashMessage = document.getElementById('flashMessage');
+        const messageText = document.getElementById('flashMessageText');
+        
+        if (!flashMessage || !messageText) {
+            alert(message); // Fallback to alert if flash elements not found
+            return;
+        }
+        
+        messageText.textContent = message;
+        flashMessage.classList.remove('hidden');
+        
+        // Clear any existing timeout
+        if (window.flashTimeout) {
+            clearTimeout(window.flashTimeout);
+        }
+        
+        // Set new timeout
+        window.flashTimeout = setTimeout(() => {
+            flashMessage.classList.add('hidden');
+        }, 3000);
+    }
+
+    // Make showReviews available globally
+    window.showReviews = async function(vendorId) {
+        try {
+            const response = await fetch(`/api/vendors/${vendorId}/reviews`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch reviews');
+            }
+            const data = await response.json();
+            
+            const reviewsModal = document.getElementById('reviewsModal');
+            const reviewsList = document.getElementById('reviewsList');
+            const modalTitle = document.getElementById('reviewsModalTitle');
+            
+            modalTitle.textContent = `Reviews for ${data.vendor_name}`;
+            reviewsList.innerHTML = '';
+            
+            if (data.reviews.length === 0) {
+                reviewsList.innerHTML = '<p class="text-gray-500 text-center py-4">No reviews yet</p>';
+            } else {
+                data.reviews.forEach(review => {
+                    const reviewElement = document.createElement('div');
+                    reviewElement.className = 'border-b border-gray-200 py-4 last:border-0';
+                    reviewElement.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <div class="font-medium">${review.user_name}</div>
+                                <div class="text-sm text-gray-500">${review.created_at}</div>
+                            </div>
+                            <div class="flex">
+                                ${'★'.repeat(review.rating)}
+                                ${'☆'.repeat(5 - review.rating)}
+                            </div>
+                        </div>
+                        <p class="text-gray-700">${review.comment}</p>
+                    `;
+                    reviewsList.appendChild(reviewElement);
+                });
+            }
+            
+            reviewsModal.classList.remove('hidden');
+        } catch (error) {
+            console.error('Error:', error);
+            showFlashMessage('Failed to load reviews. Please try again.');
+        }
+    }
+
+    // Make closeReviewsModal available globally
+    window.closeReviewsModal = function() {
+        document.getElementById('reviewsModal').classList.add('hidden');
+    }
+
+    // Handle rating modal
+    document.querySelectorAll('.rating-stars').forEach(ratingDiv => {
+        const vendorId = ratingDiv.dataset.vendorId;
+        const modal = document.getElementById(`ratingModal-${vendorId}`);
+        const form = document.getElementById(`reviewForm-${vendorId}`);
+        const stars = form.querySelectorAll('.star-input');
+        let selectedRating = 0;
+
+        // Open modal when clicking on stars
+        ratingDiv.addEventListener('click', () => {
+            if (modal) {
+                modal.classList.remove('hidden');
+            } else {
+                console.error(`Modal not found for vendor ${vendorId}`);
+            }
+        });
+
+        // Handle star hover and selection in modal
+        stars.forEach((star, index) => {
+            star.addEventListener('mouseover', () => {
+                stars.forEach((s, i) => {
+                    s.classList.toggle('text-yellow-400', i <= index);
+                });
+            });
+
+            star.addEventListener('mouseout', () => {
+                stars.forEach((s, i) => {
+                    s.classList.toggle('text-yellow-400', i < selectedRating);
+                });
+            });
+
+            star.addEventListener('click', () => {
+                selectedRating = index + 1;
+                stars.forEach((s, i) => {
+                    s.classList.toggle('text-yellow-400', i < selectedRating);
+                });
+            });
+        });
+
+        // Handle form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!selectedRating) {
+                showMessagePopup('error', 'Please select a rating');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/reviews', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        vendor_id: vendorId,
+                        rating: selectedRating,
+                        comment: form.querySelector('textarea').value
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    modal.classList.add('hidden');
+                    showMessagePopup('success', 'Review submitted successfully!');
+                } else {
+                    modal.classList.add('hidden');
+                    showMessagePopup('error', data.error || 'Failed to submit review');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                modal.classList.add('hidden');
+                showMessagePopup('error', 'Failed to submit review. Please try again.');
+            }
+        });
+
+        // Close modal when clicking cancel button
+        modal.querySelectorAll('.cancel-review').forEach(button => {
+            button.addEventListener('click', () => {
+                modal.classList.add('hidden');
+                selectedRating = 0;
+                stars.forEach(s => s.classList.remove('text-yellow-400'));
+                form.reset();
+            });
+        });
+    });
 });
+
+function showMessagePopup(type, message) {
+    const popup = document.getElementById('messagePopup');
+    const icon = document.getElementById('popupIcon');
+    const title = document.getElementById('popupTitle');
+    const messageText = document.getElementById('popupMessage');
+    
+    // Set content based on type
+    if (type === 'success') {
+        icon.innerHTML = `
+            <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>`;
+        icon.className = 'mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100';
+        title.textContent = 'Success!';
+    } else {
+        icon.innerHTML = `
+            <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>`;
+        icon.className = 'mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100';
+        title.textContent = 'Error';
+    }
+    
+    messageText.textContent = message;
+    popup.classList.remove('hidden');
+
+    // Handle close button
+    const closeBtn = document.getElementById('closePopup');
+    closeBtn.onclick = () => {
+        popup.classList.add('hidden');
+        if (type === 'success') {
+            window.location.reload();
+        }
+    };
+}
 </script>
 {% endblock %}

@@ -90,3 +90,9 @@ class Vendor(db.Model):
             int: Numerical rating value or 0
         """
         return self.rating if self.rating is not None else 0
+
+    @property
+    def average_rating(self):
+        if not self.reviews:
+            return None
+        return sum(review.rating for review in self.reviews) / len(self.reviews)
