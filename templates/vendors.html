@@ -424,5 +424,41 @@ function showMessagePopup(type, message) {
         }
     };
 }
+
+function addVendorToEvent(vendorId, eventId) {
+    fetch('/vendors', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+            event_id: eventId,
+            vendor_id: vendorId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            showMessagePopup('success', 'Vendor added successfully!');
+            // Update the button to show "Already Added"
+            const button = document.querySelector(`button[onclick="addVendorToEvent('${vendorId}', '${eventId}')"]`);
+            if (button) {
+                const parent = button.parentElement;
+                button.remove();
+                const span = document.createElement('span');
+                span.className = 'text-green-500 font-semibold';
+                span.textContent = '✓ Already Added';
+                parent.appendChild(span);
+            }
+        } else {
+            showMessagePopup('error', data.error || 'Failed to add vendor');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessagePopup('error', 'Failed to add vendor. Please try again.');
+    });
+}
 </script>
 {% endblock %}
