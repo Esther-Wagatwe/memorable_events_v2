@@ -911,43 +911,36 @@
     async function handleExpenseSubmit(event) {
         event.preventDefault();
         
-        const category = document.getElementById('expenseCategory').value;
-        const amount = document.getElementById('expenseAmount').value;
-        const originalCategory = document.getElementById('originalCategory').value;
+        const category = document.getElementById('expenseCategory').value.trim();
+        const amount = parseFloat(document.getElementById('expenseAmount').value);
         
-        const method = originalCategory ? 'PUT' : 'POST';
-        const url = `/event/${eventId}/expense/${encodeURIComponent(originalCategory || category)}`;
-        
-        console.log('Submitting expense:', { method, url, category, amount }); // Debug log
-        
+        if (!category || isNaN(amount)) {
+            showFlashMessage('Please fill in all fields correctly', 'error');
+            return;
+        }
+
         try {
-            const response = await fetch(url, {
-                method: method,
+            const response = await fetch(`/event/${eventId}/expense/${encodeURIComponent(category)}`, {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: JSON.stringify({
-                    category: category,
-                    amount: parseFloat(amount)
-                })
+                body: JSON.stringify({ amount: amount })
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
             const data = await response.json();
-            if (data.success) {
-                showFlashMessage(data.message || 'Expense saved successfully', 'success');
+            
+            if (response.ok) {
+                showFlashMessage('Expense added successfully', 'success');
                 closeExpenseModal();
-                window.location.reload();
+                window.location.reload(); // Reload to show new expense
             } else {
-                showFlashMessage(data.error || 'Error saving expense', 'error');
+                showFlashMessage(data.error || 'Error adding expense', 'error');
             }
         } catch (error) {
             console.error('Error:', error);
-            showFlashMessage('An error occurred while saving the expense', 'error');
+            showFlashMessage('An error occurred while adding the expense', 'error');
         }
     }
 
