@@ -16,9 +16,10 @@
         <div class="bg-gray-800/90 backdrop-blur-sm bg-gradient-to-br from-gray-700/50 rounded-xl shadow-md p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
             <h2 class="text-xl font-bold text-white mb-4">Guest Status</h2>
             <div class="flex flex-col">
-                <p class="text-base text-gray-400">Confirmed guests: <span class="font-bold text-white">{{ confirmed_guests }}</span></p>
-                <p class="text-base text-gray-400">Pending guests: <span class="font-bold text-white">{{ pending_guests }}</span></p>
-                <p class="text-lg font-bold text-white mt-2">Total guests: {{ confirmed_guests + pending_guests }}</p>
+                <p class="text-base text-gray-400">Attending: <span class="font-bold text-white">{{ attending_guests + invited_guests }}</span></p>
+                <p class="text-base text-gray-400">Not Attending: <span class="font-bold text-white">{{ not_attending_guests }}</span></p>
+                <p class="text-base text-gray-400">Pending: <span class="font-bold text-white">{{ pending_guests }}</span></p>
+                <p class="text-lg font-bold text-white mt-2">Total guests: {{ attending_guests + invited_guests + not_attending_guests + pending_guests }}</p>
             </div>
         </div>
 
@@ -129,7 +130,9 @@
                     {% if event.event_id not in grouped_vendors %}
                         {% set _ = grouped_vendors.update({event.event_id: {'event': event, 'vendors': []}}) %}
                     {% endif %}
-                    {% set _ = grouped_vendors[event.event_id]['vendors'].append(vendor) %}
+                    {% if vendor not in grouped_vendors[event.event_id]['vendors'] %}
+                        {% set _ = grouped_vendors[event.event_id]['vendors'].append(vendor) %}
+                    {% endif %}
                 {% endfor %}
             {% endfor %}
 

@@ -3,15 +3,15 @@
 This module handles the dashboard view for the event planning application.
 It displays upcoming events, tasks, vendor information, and guest statistics.
 """
-from flask import render_template
+from flask import render_template, current_app
 from flask_login import login_required, current_user
 from datetime import datetime
-
 from views import app_views
 from models.event import Event
 from models.task import Task
 from models.vendor import Vendor, event_vendors
 from extensions import db
+from models.guest import Guest
 
 @app_views.route('/dashboard')
 @login_required
@@ -58,13 +58,37 @@ def dashboard():
     confirmed_vendors = sum(1 for v in vendors if v.status == 'confirmed')
     pending_vendors = sum(1 for v in vendors if v.status == 'pending')
 
-    # Calculate guest statistics for the nearest future event (if any)
+        # Calculate guest statistics for the nearest future event (if any)
     if future_events:
-        nearest_event = future_events[0]
-        confirmed_guests = nearest_event.confirmed_guests
-        pending_guests = nearest_event.pending_guests
+        # Get guest counts across all future events for this user
+        guest_counts = db.session.query(
+            Guest.status,
+            db.func.count(Guest.guest_id).label('count')
+        ).join(Event)\
+        .filter(
+            Event.owner_id == current_user.user_id,
+            Event.date >= datetime.now().date()
+        ).group_by(Guest.status).all()
+        
+        # Process the counts
+        attending_guests = 0
+        invited_guests = 0
+        not_attending_guests = 0
+        pending_guests = 0
+        
+        for status, count in guest_counts:
+            if status == 'Attending':
+                attending_guests = count
+            elif status == 'Invited':
+                invited_guests = count
+            elif status == 'Not Attending':
+                not_attending_guests = count
+            elif status == 'Pending':
+                pending_guests = count
     else:
-        confirmed_guests = 0
+        attending_guests = 0
+        invited_guests = 0
+        not_attending_guests = 0
         pending_guests = 0
 
     return render_template('dashboard.html',
@@ -73,5 +97,7 @@ def dashboard():
                          vendors=vendors,
                          confirmed_vendors=confirmed_vendors,
                          pending_vendors=pending_vendors,
-                         confirmed_guests=confirmed_guests,
+                         attending_guests=attending_guests,
+                         invited_guests=invited_guests,
+                         not_attending_guests=not_attending_guests,
                          pending_guests=pending_guests)
