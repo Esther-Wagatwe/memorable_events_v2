@@ -89,6 +89,7 @@
 {% endblock %}
 
 {% block scripts %}
+{{ super() }}
 <script>
 function addVendorToEvent(vendorId, eventId) {
     fetch('/vendors', {
@@ -115,5 +116,56 @@ function addVendorToEvent(vendorId, eventId) {
         alert('An error occurred while adding the vendor');
     });
 }
+
+//functions for filtering
+document.addEventListener('DOMContentLoaded', function() {
+    const filterSelect = document.getElementById('filterSelect');
+    const searchInput = document.getElementById('searchInput');
+    const vendorGrid = document.getElementById('vendorGrid');
+    const noVendorsMessage = document.getElementById('noVendorsMessage');
+    
+    function filterVendors() {
+        const selectedCategory = filterSelect.value;
+        const searchTerm = searchInput.value.toLowerCase();
+        let visibleCount = 0;
+        
+        // Get all vendor cards
+        const vendorCards = vendorGrid.getElementsByClassName('border');
+        
+        Array.from(vendorCards).forEach(card => {
+            // Find the category text specifically where it says "Category: "
+            const categoryText = Array.from(card.querySelectorAll('p.text-gray-600'))
+                .find(p => p.textContent.startsWith('Category:'))
+                ?.textContent.replace('Category:', '').trim() || '';
+                
+            const vendorName = card.querySelector('.text-xl').textContent.toLowerCase();
+            const description = Array.from(card.querySelectorAll('p.text-gray-600'))
+                .find(p => !p.textContent.startsWith('Category:') && 
+                          !p.textContent.startsWith('Phone:') && 
+                          !p.textContent.startsWith('Email:') && 
+                          !p.textContent.startsWith('Service Fee:'))
+                ?.textContent.toLowerCase() || '';
+            
+            const matchesCategory = !selectedCategory || categoryText === selectedCategory;
+            const matchesSearch = !searchTerm || 
+                                vendorName.includes(searchTerm) || 
+                                description.includes(searchTerm);
+            
+            if (matchesCategory && matchesSearch) {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        // Show/hide no results message
+        noVendorsMessage.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+    
+    // Add event listeners
+    filterSelect.addEventListener('change', filterVendors);
+    searchInput.addEventListener('input', filterVendors);
+});
 </script>
 {% endblock %}
