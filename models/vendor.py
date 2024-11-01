@@ -9,10 +9,19 @@ Classes:
 """
 from models import db
 
-# Association table for many-to-many relationship between events and vendors
+"""Association table module for event-vendor relationships.
+
+This module defines the many-to-many relationship table between events and vendors.
+The table allows events to have multiple vendors and vendors to be associated with
+multiple events.
+
+Table Columns:
+    event_id (int): Foreign key to Event table, part of composite primary key
+    vendor_id (int): Foreign key to Vendor table, part of composite primary key
+"""
 event_vendors = db.Table('event_vendors',
-    db.Column('event_id', db.Integer, db.ForeignKey('Event.event_id')),
-    db.Column('vendor_id', db.Integer, db.ForeignKey('Vendor.vendor_id'))
+    db.Column('event_id', db.Integer, db.ForeignKey('Event.event_id'), primary_key=True),
+    db.Column('vendor_id', db.Integer, db.ForeignKey('Vendor.vendor_id'), primary_key=True),
 )
 
 class Vendor(db.Model):

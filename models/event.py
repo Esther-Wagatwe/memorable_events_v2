@@ -15,6 +15,8 @@ from models.guest import Guest
 from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy import Enum as SqlAlchemyEnum, JSON
 from sqlalchemy.orm import relationship
+from models.vendor import event_vendors
+
 
 class EventStatus(PythonEnum):
     """Event status enum.
@@ -72,7 +74,7 @@ class Event(db.Model):
     invitations = relationship('Invitation', back_populates='event')
     tasks = relationship('Task', back_populates='event')
     vendors = db.relationship('Vendor', 
-                            secondary='event_vendors',
+                            secondary=event_vendors,
                             backref=db.backref('vendor_events', lazy='dynamic'))
 
     def __init__(self, *args, **kwargs):
@@ -188,11 +190,11 @@ class Event(db.Model):
         """Get number of pending guests.
         
         Returns:
-            int: Count of pending guests
+            int: Count of pending guests (includes both Pending and Invited status)
         """
-        return Guest.query.filter_by(
-            event_id=self.event_id, 
-            status='Pending'
+        return Guest.query.filter(
+            Guest.event_id == self.event_id,
+            Guest.status.in_(['Pending', 'Invited'])
         ).count()
 
     @property
