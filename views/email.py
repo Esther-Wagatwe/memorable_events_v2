@@ -49,6 +49,5 @@ def send_invitation_email(recipient_email, event_details, invitation_id):
         mail.send(msg)
         return True
     except Exception as e:
-        print(f"Error sending invitation email: {str(e)}")
         return False
     

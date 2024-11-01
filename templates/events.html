@@ -49,6 +49,10 @@
                     <input type="text" id="name" name="name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                 </div>
                 <div class="mt-4">
+                    <label for="budget" class="block text-sm font-medium text-gray-700">Budget (KES)</label>
+                    <input type="number" id="budget" name="budget" step="0.01" min="0" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Enter event budget">
+                </div>
+                <div class="mt-4">
                     <label for="date" class="block text-sm font-medium text-gray-700">Date</label>
                     <input type="date" id="date" name="date" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                 </div>
@@ -87,45 +91,31 @@
         document.getElementById('createEventForm').reset();
     }
 
-    // Handle form submission
-    document.getElementById('createEventForm').addEventListener('submit', function(e) {
+    // Event handler for form submission
+    document.getElementById('createEventForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        // Get form data
-        const formData = {
-            name: document.getElementById('name').value,
-            date: document.getElementById('date').value,
-            location: document.getElementById('location').value,
-            description: document.getElementById('description').value
-        };
-
-        // Send POST request to create event
-        fetch('{{ url_for("app_views.events") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => response.json())
-        .then(data => {
+        const formData = new FormData(this);
+        
+        try {
+            const response = await fetch('/events', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
             if (data.success) {
-                // Show success message
-                alert('Event created successfully!');
-                // Close the dialog
+                showFlashMessage('Event created successfully', 'success');
                 closeDialog();
-                // Reload the page to show the new event
-                window.location.reload();
+                window.location.reload(); // Reload to show new event
             } else {
-                // Show error message
-                alert('Error: ' + (data.error || 'Failed to create event'));
+                showFlashMessage(data.error || 'Failed to create event', 'error');
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error:', error);
-            alert('An error occurred while creating the event');
-        });
+            showFlashMessage('Failed to create event', 'error');
+        }
     });
 
     // Add event listener for clicking outside the dialog to close it

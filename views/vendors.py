@@ -18,6 +18,7 @@ from models.review import Review
 from extensions import db
 from flask_login import login_required, current_user
 from datetime import datetime
+from sqlalchemy import text
 
 @app_views.route('/vendors', methods=['GET', 'POST', 'PUT', 'DELETE'])
 @login_required
@@ -169,6 +170,9 @@ def vendors():
             event_id = data.get('event_id')
             vendor_id = data.get('vendor_id')
             
+            if not event_id or not vendor_id:
+                return jsonify({'error': 'Missing event_id or vendor_id'}), 400
+
             # Get event and vendor
             event = Event.query.get_or_404(event_id)
             vendor = Vendor.query.get_or_404(vendor_id)
@@ -177,13 +181,23 @@ def vendors():
             if event.owner_id != current_user.user_id:
                 return jsonify({'error': 'Unauthorized'}), 403
 
-            # Remove vendor from event
-            if vendor in event.vendors:
-                event.vendors.remove(vendor)
-                db.session.commit()
-                return jsonify({'message': 'Vendor removed from event successfully'})
-            else:
+            # Check if relationship exists first
+            exists = db.session.execute(
+                text("SELECT 1 FROM event_vendors WHERE event_id = :event_id AND vendor_id = :vendor_id"),
+                {"event_id": event_id, "vendor_id": vendor_id}
+            ).first()
+
+            if not exists:
                 return jsonify({'error': 'Vendor not found in event'}), 404
+
+            # Delete the relationship directly
+            db.session.execute(
+                text("DELETE FROM event_vendors WHERE event_id = :event_id AND vendor_id = :vendor_id"),
+                {"event_id": event_id, "vendor_id": vendor_id}
+            )
+            db.session.commit()
+            
+            return jsonify({'message': 'Vendor removed from event successfully'})
             
         except Exception as e:
             db.session.rollback()
@@ -229,7 +243,6 @@ def create_review():
         
     except Exception as e:
         db.session.rollback()
-        print(f"Error creating review: {str(e)}")
         return jsonify({'error': 'Failed to create review'}), 500
 
 @app_views.route('/api/vendors/<int:vendor_id>/reviews', methods=['GET'])
@@ -240,7 +253,7 @@ def get_vendor_reviews(vendor_id):
         
         for review in vendor.reviews:
             reviews.append({
-                'user_name': review.user.username,
+                'user_name': f"{review.user.first_name} {review.user.last_name}",
                 'rating': review.rating,
                 'comment': review.comment,
                 'created_at': review.created_at.strftime('%B %d, %Y') if review.created_at else None
@@ -251,5 +264,4 @@ def get_vendor_reviews(vendor_id):
             'reviews': reviews
         })
     except Exception as e:
-        print(f"Error fetching reviews: {str(e)}")
         return jsonify({'error': 'Failed to fetch reviews'}), 500

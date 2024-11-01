@@ -16,7 +16,7 @@ from extensions import mail
 from flask_mail import Message
 from views import app_views
 from views.email import send_invitation_email
-
+import threading
 
 
 @app_views.route('/event/<int:event_id>/guests', methods=['GET', 'POST', 'PUT', 'DELETE'])
@@ -79,21 +79,30 @@ def handle_guests(event_id):
 
         elif request.method == 'PUT':
             data = request.get_json()
-            guest = Guest.query.get_or_404(data['guest_id'])
+            guest_id = data.get('guest_id')
+            if not guest_id:
+                return jsonify({'success': False, 'error': 'Guest ID is required'}), 400
+                
+            guest = Guest.query.get_or_404(guest_id)
             
             if guest.event_id != event_id:
                 return jsonify({'success': False, 'error': 'Guest not found in this event'}), 404
 
+            # Update guest information
             guest.name = data.get('name', guest.name)
             guest.email = data.get('email', guest.email)
             guest.phone = data.get('phone', guest.phone)
             
-            db.session.commit()
-            return jsonify({
-                'success': True,
-                'message': 'Guest updated successfully',
-                'guest': guest.serialize()
-            })
+            try:
+                db.session.commit()
+                return jsonify({
+                    'success': True,
+                    'message': 'Guest updated successfully',
+                    'guest': guest.serialize()
+                })
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'success': False, 'error': f'Database error: {str(e)}'}), 500
 
         elif request.method == 'DELETE':
             data = request.get_json()
@@ -148,12 +157,12 @@ def invite_guest(event_id, guest_id):
             invitation = Invitation(
                 event_id=event_id,
                 guest_id=guest_id,
-                status='pending'
+                status='Pending'
             )
             db.session.add(invitation)
             db.session.flush()
         
-        # Create message
+        # Send invitation email
         msg = Message(
             f"Invitation to {event.name}",
             sender=current_app.config['MAIL_DEFAULT_SENDER'],
@@ -173,7 +182,7 @@ def invite_guest(event_id, guest_id):
         
         mail.send(msg)
         
-        # Update statuses and commit
+        # Update guest status to 'Invited'
         guest.status = 'Invited'
         invitation.status = 'Sent'
         db.session.commit()
@@ -292,7 +301,10 @@ def update_invitation_status(invitation_id, status):
         
         # Update guest status
         guest = Guest.query.get(invitation.guest_id)
-        guest.status = 'Attending' if status == 'Accepted' else 'Not Attending'
+        if status == 'Accepted':
+            guest.status = 'Attending'
+        elif status == 'Declined':
+            guest.status = 'Not Attending'
         
         # Get event name for the response template
         event = Event.query.get(invitation.event_id)

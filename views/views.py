@@ -20,40 +20,55 @@ from models.task import Task
 from models.guest import Guest
 from models.invitation import Invitation
 from views import app_views
-
+from sqlalchemy import text
 
 @app_views.route('/events', methods=['GET', 'POST'])
 @login_required
 def events():
-    """Handle event listing and creation.
-    
-    GET: Display list of user's events
-    POST: Create a new event
-    
-    Returns:
-        GET: Rendered events template with user's events
-        POST: JSON response with created event details
-    """
+    """Handle event listing and creation."""
     if request.method == 'POST':
         try:
-            data = request.get_json()
+            data = request.form
+            
+            # Validate required fields
+            required_fields = ['name', 'date', 'location']
+            for field in required_fields:
+                if not data.get(field):
+                    return jsonify({
+                        'success': False,
+                        'error': f'{field.capitalize()} is required'
+                    }), 400
+            
+            # Convert and validate budget
+            try:
+                budget = float(data.get('budget', 0))
+            except ValueError:
+                return jsonify({
+                    'success': False,
+                    'error': 'Invalid budget value'
+                }), 400
+            
             new_event = Event(
                 owner_id=current_user.user_id,
                 name=data.get('name'),
                 date=datetime.strptime(data.get('date'), '%Y-%m-%d').date(),
-                location=data.get('location', ''),
+                location=data.get('location'),
                 description=data.get('description', ''),
                 status=EventStatus.ACTIVE,
+                budget=budget,
                 spent_budget=0.0,
                 expenses={}
             )
+            
             db.session.add(new_event)
             db.session.commit()
+            
             return jsonify({
                 'success': True,
                 'message': 'Event created successfully',
                 'event': new_event.serialize()
             })
+            
         except Exception as e:
             db.session.rollback()
             return jsonify({
@@ -189,9 +204,7 @@ def handle_expense(event_id, category):
     Returns:
         JSON response with updated expense details
     """
-    try:
-        print(f"Handling expense request: Method={request.method}, Event={event_id}, Category={category}")
-        
+    try:        
         # Verify event ownership
         event = Event.query.get_or_404(event_id)
         if event.owner_id != current_user.user_id:
@@ -250,7 +263,6 @@ def handle_expense(event_id, category):
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error handling expense: {str(e)}")
-        print(f"Error: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 400
 
 
@@ -264,30 +276,42 @@ def update_vendor_status(event_id, vendor_id):
         vendor_id: ID of vendor to update
         
     Returns:
-        Redirect to event details or dashboard
+        JSON response for AJAX requests or redirect for form submissions
     """
     try:
         event = Event.query.get_or_404(event_id)
         
         # Check if the current user is the event owner
         if event.owner_id != current_user.user_id:
-            flash('You do not have permission to update vendor status for this event.', 'error')
+            message = 'You do not have permission to update vendor status for this event.'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': False, 'message': message}), 403
+            flash(message, 'error')
             return redirect(url_for('app_views.event_details', event_id=event_id))
 
         new_status = request.form.get('status')
         if event.update_vendor_status(vendor_id, new_status):
-            flash('Vendor status updated successfully', 'success')
+            message = f'Vendor status updated to {new_status}'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': True, 'message': message})
+            flash(message, 'success')
         else:
-            flash('Failed to update vendor status', 'error')
+            message = 'Failed to update vendor status'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': False, 'message': message}), 400
+            flash(message, 'error')
 
-        # Redirect back to the appropriate page
+        # For regular form submissions, redirect back to the appropriate page
         referrer = request.referrer
         if referrer and 'dashboard' in referrer:
             return redirect(url_for('app_views.dashboard'))
         return redirect(url_for('app_views.event_details', event_id=event_id))
 
     except Exception as e:
-        flash('Error updating vendor status', 'error')
+        message = 'Error updating vendor status'
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': message}), 500
+        flash(message, 'error')
         return redirect(url_for('app_views.dashboard'))
 
 
@@ -353,13 +377,17 @@ def tasks(event_id):
                 old_status = task.status
                 task.status = data['status']
                 status_message = f'Task marked as {data["status"]}'
-                flash(status_message, 'success')
 
             db.session.commit()
+            
             return jsonify({
                 'success': True,
                 'message': status_message if 'status' in data else 'Task updated successfully',
-                'task': task.serialize()
+                'task': task.serialize(),
+                'flash': {
+                    'message': status_message if 'status' in data else 'Task updated successfully',
+                    'type': 'success'
+                }
             })
         
         elif request.method == 'DELETE':
@@ -392,63 +420,3 @@ def tasks(event_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
-    
-
-@app_views.route('/event/<int:event_id>/remove_vendor/<int:vendor_id>', methods=['GET', 'DELETE'])
-@login_required
-def remove_vendor(event_id, vendor_id):
-    """Remove a vendor from an event.
-    
-    Args:
-        event_id: ID of event to remove vendor from
-        vendor_id: ID of vendor to remove
-        
-    Returns:
-        GET: Redirect to event details
-        DELETE: JSON response with operation result
-    """
-    try:
-        event = Event.query.get_or_404(event_id)
-        vendor = Vendor.query.get_or_404(vendor_id)
-        
-        # Verify event ownership
-        if event.owner_id != current_user.user_id:
-            if request.method == 'DELETE':
-                return jsonify({'error': 'Unauthorized access'}), 403
-            flash('Unauthorized access', 'error')
-            return redirect(url_for('app_views.event_details', event_id=event_id))
-
-        # Check if vendor is in event
-        if vendor not in event.vendors:
-            if request.method == 'DELETE':
-                return jsonify({'error': 'Vendor not in event'}), 400
-            flash('Vendor is not associated with this event', 'error')
-            return redirect(url_for('app_views.event_details', event_id=event_id))
-
-        try:
-            # Remove the association from the event_vendors table
-            stmt = event_vendors.delete().where(
-                db.and_(
-                    event_vendors.c.event_id == event_id,
-                    event_vendors.c.vendor_id == vendor_id
-                )
-            )
-            db.session.execute(stmt)
-            db.session.commit()
-            
-            if request.method == 'DELETE':
-                return jsonify({'message': 'Vendor removed successfully'}), 200
-                
-            flash(f'"{vendor.name}" has been removed from the event', 'success')
-            return redirect(url_for('app_views.event_details', event_id=event_id))
-            
-        except Exception as e:
-            db.session.rollback()
-            raise e
-        
-    except Exception as e:
-        db.session.rollback()
-        if request.method == 'DELETE':
-            return jsonify({'error': str(e)}), 500
-        flash(f'Error removing vendor: {str(e)}', 'error')
-        return redirect(url_for('app_views.event_details', event_id=event_id))
