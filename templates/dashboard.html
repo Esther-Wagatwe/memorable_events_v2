@@ -140,7 +140,7 @@
                 <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
                     <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
                         <h3 class="text-xl font-bold text-gray-900">
-                            {{ group.event.name }} Vendors
+                            {{ group.event.name | safe }} Vendors
                             <span class="text-sm text-gray-500 font-normal">
                                 ({{ group.event.date.strftime('%B %d, %Y') }})
                             </span>
@@ -176,7 +176,6 @@
                                             class="rounded-lg border-gray-300 text-base focus:ring-black focus:border-black">
                                         <option value="pending" {% if vendor.status == 'pending' %}selected{% endif %}>Pending</option>
                                         <option value="confirmed" {% if vendor.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
-                                        <option value="cancelled" {% if vendor.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
                                     </select>
                                 </form>
                             </div>
@@ -202,37 +201,6 @@
 
 {% block scripts %}
 <script>
-    // Function to show flash messages
-    function showFlashMessage(message, type = 'success') {
-        const flashContainer = document.createElement('div');
-        flashContainer.className = `fixed top-4 right-4 p-4 rounded-lg text-white transition-opacity duration-500 ${
-            type === 'success' ? 'bg-green-500' : 'bg-red-500'
-        }`;
-        flashContainer.style.zIndex = '9999';
-        
-        const messageText = document.createElement('p');
-        messageText.className = 'flex items-center';
-        messageText.innerHTML = `
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                ${type === 'success' 
-                    ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>'
-                    : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>'
-                }
-            </svg>
-            ${message}
-        `;
-        
-        flashContainer.appendChild(messageText);
-        document.body.appendChild(flashContainer);
-
-        setTimeout(() => {
-            flashContainer.classList.add('opacity-0');
-            setTimeout(() => {
-                flashContainer.remove();
-            }, 500);
-        }, 3000);
-    }
-
     // Function to update task status
     async function updateTaskStatus(taskId, eventId, completed) {
         try {
@@ -280,23 +248,52 @@
         }
     }
 
-    // Function to update the pending tasks count in the stats card
-    function updatePendingTasksCount() {
-        const pendingTasksElement = document.querySelector('.text-4xl.font-bold.text-white');
-        if (pendingTasksElement) {
-            const currentCount = parseInt(pendingTasksElement.textContent);
-            pendingTasksElement.textContent = Math.max(0, currentCount - 1);
-        }
-    }
-
     // Add event listeners when the DOM is loaded
     document.addEventListener('DOMContentLoaded', function() {
+        // Task checkboxes event listeners
         const checkboxes = document.querySelectorAll('input[type="checkbox"][data-task-id]');
         checkboxes.forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 const taskId = this.getAttribute('data-task-id');
                 const eventId = this.getAttribute('data-event-id');
                 updateTaskStatus(taskId, eventId, this.checked);
+            });
+        });
+
+        // Update all vendor forms to use AJAX
+        const vendorForms = document.querySelectorAll('form[action*="update_vendor_status"]');
+        vendorForms.forEach(form => {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                try {
+                    const response = await fetch(this.action, {
+                        method: 'POST',
+                        body: new FormData(this),
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    if (response.ok) {
+                        showFlashMessage('Vendor status updated successfully', 'success');
+                        // Update the status display without reloading
+                        const vendorItem = this.closest('.p-6');
+                        const statusSpan = vendorItem.querySelector('span.rounded-full');
+                        const newStatus = this.querySelector('select').value;
+                        statusSpan.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                        statusSpan.className = `px-2 py-1 text-base rounded-full ${newStatus === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`;
+                        // Add delay before reload
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        showFlashMessage('Failed to update vendor status', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showFlashMessage('An error occurred while updating the vendor status', 'error');
+                }
             });
         });
     });
