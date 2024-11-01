@@ -164,14 +164,27 @@ class Event(db.Model):
 
     @property
     def progress(self):
-        """Calculate task completion percentage.
+        """Calculate overall planning progress percentage.
+        
+        Combines task completion (60% weight) and vendor confirmation (40% weight).
         
         Returns:
-            float: Percentage of completed tasks
+            float: Overall planning progress percentage
         """
-        if self.total_tasks == 0:
-            return 0
-        return (self.completed_tasks / self.total_tasks) * 100
+        # Calculate task progress (60% of total)
+        task_progress = 0
+        if self.total_tasks > 0:
+            task_progress = (self.completed_tasks / self.total_tasks) * 60
+
+        # Calculate vendor progress (40% of total)
+        vendor_progress = 0
+        total_vendors = len(self.vendors)
+        if total_vendors > 0:
+            confirmed_vendors = sum(1 for v in self.vendors if v.status == 'confirmed')
+            vendor_progress = (confirmed_vendors / total_vendors) * 40
+
+        # Return combined progress
+        return task_progress + vendor_progress
 
     @property
     def confirmed_guests(self):

@@ -1,5 +1,5 @@
 """Authentication views for handling user login, signup, and logout."""
-from flask import render_template, redirect, url_for, flash, request, current_app
+from flask import render_template, redirect, url_for, flash, request, current_app, session
 from models.user import User, check_password_hash, generate_password_hash
 from flask_login import login_user, logout_user, login_required
 from models import db
@@ -91,8 +91,10 @@ def signup():
 def logout():
     """Handle user logout."""
     try:
+        # Clear all flash messages before logging out
+        session.pop('_flashes', None)
+        
         logout_user()
-        flash('You have been successfully logged out.', 'success')
     except Exception as e:
         current_app.logger.error(f"Logout error: {str(e)}")
         flash('An error occurred during logout.', 'error')

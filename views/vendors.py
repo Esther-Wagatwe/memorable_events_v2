@@ -252,11 +252,14 @@ def get_vendor_reviews(vendor_id):
         reviews = []
         
         for review in vendor.reviews:
+            date_str = review.created_at.strftime('%Y-%m-%d') if review.created_at else None
+            formatted_date = datetime.strptime(date_str, '%Y-%m-%d').strftime('%B %d, %Y') if date_str else None
+            
             reviews.append({
-                'user_name': f"{review.user.first_name} {review.user.last_name}",
+                'user_name': review.user.username,
                 'rating': review.rating,
                 'comment': review.comment,
-                'created_at': review.created_at.strftime('%B %d, %Y') if review.created_at else None
+                'created_at': formatted_date
             })
         
         return jsonify({
@@ -264,4 +267,5 @@ def get_vendor_reviews(vendor_id):
             'reviews': reviews
         })
     except Exception as e:
+        print(f"Error fetching reviews: {str(e)}")  # Debug log
         return jsonify({'error': 'Failed to fetch reviews'}), 500

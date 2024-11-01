@@ -51,7 +51,7 @@
                 <p class="text-gray-600 mb-2">{{ vendor.description }}</p>
                 <p class="text-gray-600 mb-2">Phone: {{ vendor.phone_number }}</p>
                 <p class="text-gray-600 mb-2">Email: {{ vendor.email }}</p>
-                <p class="text-gray-600 mb-2">Service Fee: ${{ vendor.service_fee }}</p>
+                <p class="text-gray-600 mb-2">Service Fee: Ksh {{ vendor.service_fee }}</p>
                 
                 {% if event_id %}
                     {% if vendor in event_vendors %}
@@ -100,19 +100,20 @@
                                     </svg>
                                 </button>
                             </div>
-                            <form id="reviewForm-{{ vendor.vendor_id }}" class="space-y-4">
+                            <form id="reviewForm-{{ vendor.vendor_id }}" class="space-y-4" onsubmit="submitReview(event, {{ vendor.vendor_id }})">
                                 <div class="rating-input flex space-x-1">
                                     {% for i in range(5) %}
-                                        <span class="star-input text-2xl cursor-pointer text-gray-300">★</span>
+                                        <span class="star-input text-2xl cursor-pointer text-gray-300" data-value="{{ i + 1 }}">★</span>
                                     {% endfor %}
                                 </div>
                                 <div>
-                                    <textarea name="comment" rows="4" class="w-full border rounded-md p-2" placeholder="Write your review here..."></textarea>
+                                    <textarea name="comment" rows="4" class="w-full border rounded-md p-2" placeholder="Write your review here..." required></textarea>
                                 </div>
                                 <div class="flex justify-end space-x-2">
-                                    <button type="button" class="cancel-review px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
+                                    <button type="button" onclick="cancelReview({{ vendor.vendor_id }})" class="cancel-review px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
                                     <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Submit</button>
                                 </div>
+                                <input type="hidden" name="rating" id="rating-{{ vendor.vendor_id }}" value="0">
                             </form>
                         </div>
                     </div>
@@ -234,46 +235,60 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const data = await response.json();
             
-            const reviewsModal = document.getElementById('reviewsModal');
-            const reviewsList = document.getElementById('reviewsList');
-            const modalTitle = document.getElementById('reviewsModalTitle');
-            
-            modalTitle.textContent = `Reviews for ${data.vendor_name}`;
-            reviewsList.innerHTML = '';
+            // Create modal content
+            let modalContent = `
+                <h3 class="text-lg font-semibold mb-4">Reviews for ${data.vendor_name}</h3>
+                <div class="space-y-4">
+            `;
             
             if (data.reviews.length === 0) {
-                reviewsList.innerHTML = '<p class="text-gray-500 text-center py-4">No reviews yet</p>';
+                modalContent += `<p class="text-gray-600">No reviews yet.</p>`;
             } else {
                 data.reviews.forEach(review => {
-                    const reviewElement = document.createElement('div');
-                    reviewElement.className = 'border-b border-gray-200 py-4 last:border-0';
-                    reviewElement.innerHTML = `
-                        <div class="flex justify-between items-start mb-2">
-                            <div>
-                                <div class="font-medium">${review.user_name}</div>
-                                <div class="text-sm text-gray-500">${review.created_at}</div>
+                    modalContent += `
+                        <div class="border-b pb-3">
+                            <div class="flex justify-between items-center">
+                                <span class="font-medium">${review.user_name}</span>
+                                <span class="text-sm text-gray-600">${review.created_at}</span>
                             </div>
-                            <div class="flex">
-                                ${'★'.repeat(review.rating)}
-                                ${'☆'.repeat(5 - review.rating)}
+                            <div class="flex items-center mt-1">
+                                <div class="text-yellow-400">
+                                    ${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}
+                                </div>
                             </div>
+                            <p class="mt-2 text-gray-700">${review.comment}</p>
                         </div>
-                        <p class="text-gray-700">${review.comment}</p>
                     `;
-                    reviewsList.appendChild(reviewElement);
                 });
             }
             
-            reviewsModal.classList.remove('hidden');
+            modalContent += `</div>`;
+            
+            // Show the modal with reviews
+            const dialog = document.createElement('dialog');
+            dialog.className = 'rounded-lg shadow-xl p-6 w-full max-w-md';
+            dialog.innerHTML = `
+                ${modalContent}
+                <div class="mt-6 flex justify-end">
+                    <button onclick="this.closest('dialog').close()" 
+                            class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+                        Close
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(dialog);
+            dialog.showModal();
+            
+            // Clean up when dialog closes
+            dialog.addEventListener('close', () => {
+                document.body.removeChild(dialog);
+            });
+            
         } catch (error) {
             console.error('Error:', error);
-            showFlashMessage('Failed to load reviews. Please try again.');
+            showFlashMessage('Failed to load reviews. Please try again.', 'error');
         }
-    }
-
-    // Make closeReviewsModal available globally
-    window.closeReviewsModal = function() {
-        document.getElementById('reviewsModal').classList.add('hidden');
     }
 
     // Handle rating modal
@@ -309,6 +324,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             star.addEventListener('click', () => {
                 selectedRating = index + 1;
+                form.querySelector(`#rating-${vendorId}`).value = selectedRating;
                 stars.forEach((s, i) => {
                     s.classList.toggle('text-yellow-400', i < selectedRating);
                 });
@@ -316,10 +332,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Handle form submission
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!selectedRating) {
-                showMessagePopup('error', 'Please select a rating');
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const comment = form.querySelector('textarea[name="comment"]').value;
+
+            if (selectedRating === 0) {
+                showFlashMessage('Please select a rating', 'error');
                 return;
             }
 
@@ -327,39 +345,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 const response = await fetch('/api/reviews', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
                         vendor_id: vendorId,
                         rating: selectedRating,
-                        comment: form.querySelector('textarea').value
+                        comment: comment
                     })
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
+                    showFlashMessage('Review submitted successfully', 'success');
+                    form.reset();
+                    selectedRating = 0;
+                    stars.forEach(s => {
+                        s.classList.remove('text-yellow-400');
+                        s.classList.add('text-gray-300');
+                    });
                     modal.classList.add('hidden');
-                    showMessagePopup('success', 'Review submitted successfully!');
+                    await showReviews(vendorId);
                 } else {
-                    modal.classList.add('hidden');
-                    showMessagePopup('error', data.error || 'Failed to submit review');
+                    showFlashMessage(data.error || 'Failed to submit review', 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                modal.classList.add('hidden');
-                showMessagePopup('error', 'Failed to submit review. Please try again.');
+                showFlashMessage('Failed to submit review', 'error');
             }
         });
 
-        // Close modal when clicking cancel button
-        modal.querySelectorAll('.cancel-review').forEach(button => {
-            button.addEventListener('click', () => {
-                modal.classList.add('hidden');
-                selectedRating = 0;
-                stars.forEach(s => s.classList.remove('text-yellow-400'));
-                form.reset();
+        // Handle cancel button
+        form.querySelector('.cancel-review').addEventListener('click', () => {
+            form.reset();
+            selectedRating = 0;
+            stars.forEach(s => {
+                s.classList.remove('text-yellow-400');
+                s.classList.add('text-gray-300');
             });
+            modal.classList.add('hidden');
         });
     });
 });
