@@ -1,0 +1,128 @@
+{% extends "index.html" %}
+
+{% block title %}Profile - Memorable Events{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white shadow rounded-lg p-6">
+        <!-- Profile Header -->
+        <div class="flex items-center space-x-6 mb-6">
+            <div class="relative h-24 w-24">
+                <img 
+                    src="{{ url_for('static', filename='images/' + current_user.profile_picture) }}" 
+                    alt="Profile picture"
+                    class="rounded-full object-cover w-full h-full"
+                >
+                <button 
+                    onclick="document.getElementById('profile_picture').click()"
+                    class="absolute bottom-0 right-0 bg-gray-800 text-white p-1 rounded-full hover:bg-gray-700"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                </button>
+                <input type="file" id="profile_picture" class="hidden" accept="image/*">
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold">{{ current_user.username }}</h2>
+                <p class="text-gray-600">{{ current_user.email }}</p>
+            </div>
+        </div>
+
+        <!-- Profile Form -->
+        <form id="profile-form" class="space-y-4">
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                <input type="text" id="username" name="username" value="{{ current_user.username }}"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="email" name="email" value="{{ current_user.email }}"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label for="new_password" class="block text-sm font-medium text-gray-700">New Password</label>
+                <input type="password" id="new_password" name="new_password"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    Save Changes
+                </button>
+                <button type="button" onclick="deleteAccount()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                    Delete Account
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('profile-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    try {
+        const response = await fetch('{{ url_for("app_views.profile") }}', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(Object.fromEntries(formData))
+        });
+        if (response.ok) {
+            showFlashMessage('Profile updated successfully');
+        } else {
+            showFlashMessage('Failed to update profile', 'error');
+        }
+    } catch (error) {
+        showFlashMessage('An error occurred', 'error');
+    }
+});
+
+document.getElementById('profile_picture').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append('profile_picture', file);
+    
+    try {
+        const response = await fetch('{{ url_for("app_views.profile") }}', {
+            method: 'POST',
+            body: formData
+        });
+        if (response.ok) {
+            showFlashMessage('Profile picture updated successfully');
+            location.reload();
+        } else {
+            showFlashMessage('Failed to update profile picture', 'error');
+        }
+    } catch (error) {
+        showFlashMessage('An error occurred', 'error');
+    }
+});
+
+async function deleteAccount() {
+    if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('{{ url_for("app_views.profile") }}', {
+            method: 'DELETE'
+        });
+        if (response.ok) {
+            showFlashMessage('Account deleted successfully');
+            window.location.href = '{{ url_for("app_views.landingpage") }}';
+        } else {
+            showFlashMessage('Failed to delete account', 'error');
+        }
+    } catch (error) {
+        showFlashMessage('An error occurred', 'error');
+    }
+}
+</script>
+{% endblock %}
